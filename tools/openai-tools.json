@@ -1,0 +1,90 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "set_world_fact",
+      "description": "Store or update a world fact using LWW CRDT semantics. Facts are content-addressed by domain|entity|attribute.",
+      "strict": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "The fact domain (e.g. 'life', 'alliance', 'possession', 'knowledge')."
+          },
+          "entity": {
+            "type": "string",
+            "description": "The entity this fact is about (e.g. 'king', 'treaty-1')."
+          },
+          "attribute": {
+            "type": "string",
+            "description": "The attribute being asserted (e.g. 'alive', 'valid', 'owner')."
+          },
+          "value": {
+            "description": "The value of the attribute (bool, str, float, or null)."
+          },
+          "version": {
+            "type": "integer",
+            "description": "CRDT version vector. Higher version wins on conflict."
+          },
+          "agent_id": {
+            "type": "string",
+            "description": "The ID of the agent asserting this fact."
+          },
+          "db": {
+            "type": "string",
+            "description": "Path to the agentcrdt SQLite database."
+          }
+        },
+        "required": ["domain", "entity", "attribute", "value", "version", "agent_id", "db"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_world_facts",
+      "description": "List world facts from the agentcrdt store, optionally filtered by domain.",
+      "strict": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "db": {
+            "type": "string",
+            "description": "Path to the agentcrdt SQLite database."
+          },
+          "domain": {
+            "type": "string",
+            "description": "Optional domain filter (e.g. 'life', 'alliance')."
+          }
+        },
+        "required": ["db", "domain"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "merge_world_state",
+      "description": "Merge a remote agentcrdt store into the local one using LWW CRDT semantics. Returns merged fact count and any contradiction events.",
+      "strict": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "db": {
+            "type": "string",
+            "description": "Path to the local agentcrdt SQLite database."
+          },
+          "other_db": {
+            "type": "string",
+            "description": "Path to the remote agentcrdt SQLite database to merge from."
+          }
+        },
+        "required": ["db", "other_db"],
+        "additionalProperties": false
+      }
+    }
+  }
+]

@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentcrdt"
+version = "0.1.0"
+description = "Semantic-causal CRDT for agent-mutable world state"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "Sandeep Alluru", email = "onepuncchh@gmail.com" }]
+keywords = ["gaming", "crdt", "multi-agent", "world-state", "agents", "mcp", "llmops"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Environment :: Console",
+    "Typing :: Typed",
+]
+dependencies = [
+    "click>=8.0",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.9",
+    "mypy>=1.10",
+    "pre-commit>=3.0",
+    "fastapi>=0.110",
+    "httpx>=0.27",
+]
+mcp = ["mcp>=1.0"]
+api = ["fastapi>=0.110", "uvicorn>=0.29"]
+
+[project.scripts]
+agentcrdt = "agentcrdt.cli:main"
+agentcrdt-mcp = "agentcrdt.mcp_server:run_server"
+
+[project.urls]
+Homepage      = "https://github.com/sandeep-alluru/agentcrdt"
+Repository    = "https://github.com/sandeep-alluru/agentcrdt"
+Documentation = "https://sandeep-alluru.github.io/agentcrdt"
+Changelog     = "https://github.com/sandeep-alluru/agentcrdt/blob/main/CHANGELOG.md"
+Issues        = "https://github.com/sandeep-alluru/agentcrdt/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentcrdt"]
+
+[tool.ruff]
+line-length    = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "S", "B", "RUF"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+
+[tool.mypy]
+python_version         = "3.10"
+strict                 = false
+ignore_missing_imports = true
+warn_return_any        = true
+warn_unused_ignores    = true
+disallow_untyped_defs  = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts   = "--cov=agentcrdt --cov-report=term-missing --cov-report=xml"
+
+[tool.coverage.run]
+source   = ["agentcrdt"]
+branch   = true
+
+[tool.coverage.report]
+fail_under   = 85
+show_missing = true
