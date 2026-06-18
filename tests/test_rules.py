@@ -183,15 +183,15 @@ class TestRuleEngine:
         engine = RuleEngine(rules=[rule])
         assert engine.check(facts) == []
 
-    def test_implies_entity_same_false_skips(self) -> None:
-        """implies_entity_same=False prevents entity-based implied key lookup."""
+    def test_implies_entity_same_false_checks_all_entities(self) -> None:
+        """implies_entity_same=False checks all facts in implies_domain across any entity."""
         rule = SemanticRule(
             name="cross-entity-rule",
             trigger_domain="life",
             trigger_attribute="alive",
             trigger_value=False,
             implies_domain="alliance",
-            implies_entity_same=False,  # can't look up cross-entity without more info
+            implies_entity_same=False,  # cross-entity: scan all facts in implies_domain
             implies_attribute="valid",
             implies_value=False,
         )
@@ -199,6 +199,8 @@ class TestRuleEngine:
         treaty_valid = _make_fact("alliance", "treaty-1", "valid", True)
         facts = {king_dead.id: king_dead, treaty_valid.id: treaty_valid}
         engine = RuleEngine(rules=[rule])
-        # With implies_entity_same=False, entity is None so no lookup is done
+        # king is dead (trigger), but treaty-1 is still valid=True — contradiction
         events = engine.check(facts)
-        assert events == []
+        assert len(events) == 1
+        assert events[0].rule == "cross-entity-rule"
+        assert set(events[0].facts_involved) == {king_dead.id, treaty_valid.id}

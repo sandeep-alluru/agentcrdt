@@ -58,20 +58,23 @@ class RuleEngine:
                 if f.value != rule.trigger_value:
                     continue
                 # This fact triggers the rule
-                entity = f.entity if rule.implies_entity_same else None
-                if entity is None:
-                    continue
-                implied_key = (rule.implies_domain, entity, rule.implies_attribute)
-                implied = by_key.get(implied_key)
-                if implied is None:
-                    continue
-                # Check if the implied fact contradicts the rule
-                if implied.value != rule.implies_value:
-                    evt = ContradictionEvent(
-                        rule=rule.name,
-                        facts_involved=[f.id, implied.id],
-                        agent_a=f.agent_id,
-                        agent_b=implied.agent_id,
-                    )
-                    events.append(evt)
+                if rule.implies_entity_same:
+                    implied_key = (rule.implies_domain, f.entity, rule.implies_attribute)
+                    candidates = [by_key.get(implied_key)]
+                    candidates = [c for c in candidates if c is not None]
+                else:
+                    # Check all facts in implies_domain with implies_attribute (any entity)
+                    candidates = [
+                        g for g in facts.values()
+                        if g.domain == rule.implies_domain and g.attribute == rule.implies_attribute
+                    ]
+                for implied in candidates:
+                    if implied.value != rule.implies_value:
+                        evt = ContradictionEvent(
+                            rule=rule.name,
+                            facts_involved=[f.id, implied.id],
+                            agent_a=f.agent_id,
+                            agent_b=implied.agent_id,
+                        )
+                        events.append(evt)
         return events
