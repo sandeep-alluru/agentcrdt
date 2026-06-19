@@ -22,6 +22,7 @@ class FactHistory:
     def get_history(self, entity: str, attribute: str) -> list[FactVersion]:
         """Return all versions of a fact, newest first."""
         rows = self._store.list_fact_history_by_entity_attr(entity, attribute)
+        # rows is sorted oldest-first (ASC)
         versions: list[FactVersion] = []
         for i, row in enumerate(rows):
             fact = WorldFact.from_dict({
@@ -33,13 +34,16 @@ class FactHistory:
                 "agent_id": row["agent_id"],
                 "timestamp": row["timestamp"],
             })
-            superseded_by = rows[i - 1]["fact_id"] if i > 0 else None
+            # This fact was superseded by the next one (i+1), or None if it's the latest
+            superseded_by = rows[i + 1]["fact_id"] if i < len(rows) - 1 else None
+            version_index = i  # 0 = oldest, len-1 = newest
             versions.append(FactVersion(
                 fact=fact,
                 superseded_by=superseded_by,
-                version_index=len(rows) - 1 - i,
+                version_index=version_index,
             ))
-        return versions
+        # Return newest-first as per docstring
+        return list(reversed(versions))
 
     def get_at_time(self, entity: str, attribute: str, timestamp: float) -> WorldFact | None:
         """Return the fact that was current at a given timestamp."""

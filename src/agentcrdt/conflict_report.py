@@ -60,12 +60,11 @@ def conflict_report(store: WorldStore) -> ConflictSummary:
     # Sort most contested entities by count
     most_contested = sorted(by_entity, key=lambda e: by_entity[e], reverse=True)[:5]
 
-    # resolution_rate: fraction of conflicts that are auto-resolved (vs needing human review)
-    # We approximate: events where agent_a and agent_b are non-empty are "auto" resolved
-    auto_resolved = sum(
-        1 for e in events if e.agent_a and e.agent_b
-    )
-    resolution_rate = auto_resolved / total if total > 0 else 0.0
+    # resolution_rate: entity diversity measure — fraction of conflicts caused by unique entities.
+    # A value closer to 0 means a single entity is causing nearly all conflicts;
+    # closer to 1 means conflicts are spread across many different entities.
+    unique_entities = len(summary_by_entity) if (summary_by_entity := by_entity) else 0
+    resolution_rate = unique_entities / max(1, total)
 
     return ConflictSummary(
         total_conflicts=total,
