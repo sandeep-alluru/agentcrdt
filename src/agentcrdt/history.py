@@ -1,4 +1,5 @@
 """Fact history tracking — all historical versions of each fact."""
+
 from __future__ import annotations
 
 import json
@@ -11,7 +12,7 @@ from agentcrdt.store import WorldStore
 @dataclass
 class FactVersion:
     fact: WorldFact
-    superseded_by: str | None   # ID of fact that replaced this (None if current)
+    superseded_by: str | None  # ID of fact that replaced this (None if current)
     version_index: int
 
 
@@ -25,23 +26,27 @@ class FactHistory:
         # rows is sorted oldest-first (ASC)
         versions: list[FactVersion] = []
         for i, row in enumerate(rows):
-            fact = WorldFact.from_dict({
-                "domain": row["domain"],
-                "entity": row["entity"],
-                "attribute": row["attribute"],
-                "value": json.loads(row["value"]),
-                "version": row["version"],
-                "agent_id": row["agent_id"],
-                "timestamp": row["timestamp"],
-            })
+            fact = WorldFact.from_dict(
+                {
+                    "domain": row["domain"],
+                    "entity": row["entity"],
+                    "attribute": row["attribute"],
+                    "value": json.loads(row["value"]),
+                    "version": row["version"],
+                    "agent_id": row["agent_id"],
+                    "timestamp": row["timestamp"],
+                }
+            )
             # This fact was superseded by the next one (i+1), or None if it's the latest
             superseded_by = rows[i + 1]["fact_id"] if i < len(rows) - 1 else None
             version_index = i  # 0 = oldest, len-1 = newest
-            versions.append(FactVersion(
-                fact=fact,
-                superseded_by=superseded_by,
-                version_index=version_index,
-            ))
+            versions.append(
+                FactVersion(
+                    fact=fact,
+                    superseded_by=superseded_by,
+                    version_index=version_index,
+                )
+            )
         # Return newest-first as per docstring
         return list(reversed(versions))
 
@@ -55,15 +60,17 @@ class FactHistory:
                 candidate = row
         if candidate is None:
             return None
-        return WorldFact.from_dict({
-            "domain": candidate["domain"],
-            "entity": candidate["entity"],
-            "attribute": candidate["attribute"],
-            "value": json.loads(candidate["value"]),
-            "version": candidate["version"],
-            "agent_id": candidate["agent_id"],
-            "timestamp": candidate["timestamp"],
-        })
+        return WorldFact.from_dict(
+            {
+                "domain": candidate["domain"],
+                "entity": candidate["entity"],
+                "attribute": candidate["attribute"],
+                "value": json.loads(candidate["value"]),
+                "version": candidate["version"],
+                "agent_id": candidate["agent_id"],
+                "timestamp": candidate["timestamp"],
+            }
+        )
 
     def diff_entity(self, entity: str) -> dict[str, list[FactVersion]]:
         """Return full history of all attributes for an entity."""

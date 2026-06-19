@@ -1,4 +1,5 @@
 """SQLite-backed store for WorldFacts and ContradictionEvents."""
+
 from __future__ import annotations
 
 import json
@@ -195,7 +196,7 @@ class WorldStore:
             result.append(e)
         return result
 
-    def list_fact_history(self, fact_id: str) -> list[dict]:
+    def list_fact_history(self, fact_id: str) -> list[dict[str, Any]]:
         """Return all historical rows for a fact_id ordered by recorded_at ASC."""
         rows = self._conn.execute(
             "SELECT * FROM fact_history WHERE fact_id=? ORDER BY recorded_at ASC",
@@ -203,7 +204,7 @@ class WorldStore:
         ).fetchall()
         return [dict(r) for r in rows]
 
-    def list_fact_history_by_entity_attr(self, entity: str, attribute: str) -> list[dict]:
+    def list_fact_history_by_entity_attr(self, entity: str, attribute: str) -> list[dict[str, Any]]:
         """Return all historical rows for entity+attribute, ordered by recorded_at ASC."""
         rows = self._conn.execute(
             "SELECT * FROM fact_history WHERE entity=? AND attribute=? ORDER BY recorded_at ASC",
@@ -211,7 +212,7 @@ class WorldStore:
         ).fetchall()
         return [dict(r) for r in rows]
 
-    def list_fact_history_by_entity(self, entity: str) -> list[dict]:
+    def list_fact_history_by_entity(self, entity: str) -> list[dict[str, Any]]:
         """Return all historical rows for an entity, ordered by recorded_at ASC."""
         rows = self._conn.execute(
             "SELECT * FROM fact_history WHERE entity=? ORDER BY recorded_at ASC",

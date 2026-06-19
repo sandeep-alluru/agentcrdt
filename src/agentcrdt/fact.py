@@ -1,4 +1,5 @@
 """WorldFact and ContradictionEvent — content-addressed primitives of agentcrdt."""
+
 from __future__ import annotations
 
 import hashlib
@@ -20,10 +21,10 @@ class WorldFact:
     agents recording the same fact key always get the same ID.
     """
 
-    domain: str        # "life", "alliance", "possession", "knowledge"
-    entity: str        # "king", "treaty-1"
-    attribute: str     # "alive", "valid", "owner"
-    value: Any         # bool, str, float, None
+    domain: str  # "life", "alliance", "possession", "knowledge"
+    entity: str  # "king", "treaty-1"
+    attribute: str  # "alive", "valid", "owner"
+    value: Any  # bool, str, float, None
     version: int = 0
     agent_id: str = ""
     timestamp: float = field(default_factory=time.time)

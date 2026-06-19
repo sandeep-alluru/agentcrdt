@@ -1,7 +1,9 @@
 """Change watching — subscribe to WorldStore mutations."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Any
 
 from agentcrdt.fact import WorldFact
 from agentcrdt.store import WorldStore
@@ -12,15 +14,17 @@ class ChangeWatcher:
 
     def __init__(self, store: WorldStore) -> None:
         self._store = store
-        self._callbacks: list[tuple[str | None, str | None, Callable]] = []
+        self._callbacks: list[tuple[str | None, str | None, Callable[..., Any]]] = []
         # Snapshot: "entity::attribute" -> WorldFact
         self._last_snapshot: dict[str, WorldFact] = self._take_snapshot()
 
-    def on_change(self, entity: str | None = None, attribute: str | None = None):
+    def on_change(self, entity: str | None = None, attribute: str | None = None) -> Callable[..., Any]:
         """Decorator: register a callback for when a matching fact changes."""
-        def decorator(fn: Callable) -> Callable:
+
+        def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
             self._callbacks.append((entity, attribute, fn))
             return fn
+
         return decorator
 
     def check(self) -> list[WorldFact]:

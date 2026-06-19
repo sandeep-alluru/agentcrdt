@@ -1,4 +1,5 @@
 """WorldMerger — merge two WorldStores with CRDT semantics + semantic rule checking."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

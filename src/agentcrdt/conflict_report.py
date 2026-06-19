@@ -1,4 +1,5 @@
 """Conflict reporting — summarize ContradictionEvents from a WorldStore."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,7 +15,7 @@ class ConflictSummary:
     by_rule: dict[str, int]
     by_entity: dict[str, int]
     most_contested_entities: list[str]
-    conflict_timeline: list[dict]
+    conflict_timeline: list[dict[str, Any]]
     resolution_rate: float
 
     def to_dict(self) -> dict[str, Any]:
@@ -35,7 +36,7 @@ def conflict_report(store: WorldStore) -> ConflictSummary:
 
     by_rule: dict[str, int] = {}
     by_entity: dict[str, int] = {}
-    timeline: list[dict] = []
+    timeline: list[dict[str, Any]] = []
 
     facts_index = {f.id: f for f in store.list_facts()}
 
@@ -50,12 +51,14 @@ def conflict_report(store: WorldStore) -> ConflictSummary:
                 entities_in_event.append(f.entity)
                 by_entity[f.entity] = by_entity.get(f.entity, 0) + 1
 
-        timeline.append({
-            "timestamp": event.timestamp,
-            "rule": event.rule,
-            "entity": entities_in_event[0] if entities_in_event else "unknown",
-            "values": event.facts_involved,
-        })
+        timeline.append(
+            {
+                "timestamp": event.timestamp,
+                "rule": event.rule,
+                "entity": entities_in_event[0] if entities_in_event else "unknown",
+                "values": event.facts_involved,
+            }
+        )
 
     # Sort most contested entities by count
     most_contested = sorted(by_entity, key=lambda e: by_entity[e], reverse=True)[:5]
@@ -80,6 +83,5 @@ def conflicts_for_entity(store: WorldStore, entity: str) -> list[ContradictionEv
     """Get all conflicts for a specific entity."""
     facts_for_entity = {f.id for f in store.list_facts() if f.entity == entity}
     return [
-        e for e in store.list_events()
-        if any(fid in facts_for_entity for fid in e.facts_involved)
+        e for e in store.list_events() if any(fid in facts_for_entity for fid in e.facts_involved)
     ]

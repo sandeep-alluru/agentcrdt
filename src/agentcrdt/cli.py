@@ -1,4 +1,5 @@
 """CLI for agentcrdt."""
+
 from __future__ import annotations
 
 import click
@@ -92,9 +93,7 @@ def merge_cmd(ctx: click.Context, other_db: str) -> None:
     """Merge another store into this one."""
     with _open(ctx.obj["db"]) as local, _open(other_db) as remote:
         result = WorldMerger().merge(local, remote)
-    click.echo(
-        f"Merged {result.merged_count} facts. Contradictions: {len(result.conflicts)}"
-    )
+    click.echo(f"Merged {result.merged_count} facts. Contradictions: {len(result.conflicts)}")
 
 
 @main.command("events")

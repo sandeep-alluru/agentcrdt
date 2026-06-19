@@ -1,4 +1,5 @@
 """Rich terminal, JSON, and Markdown formatters for agentcrdt."""
+
 from __future__ import annotations
 
 import json
@@ -69,9 +70,7 @@ def print_events(events: list[ContradictionEvent], console: Console | None = Non
     con.print(table)
 
 
-def to_json(
-    facts: list[WorldFact], events: list[ContradictionEvent] | None = None
-) -> str:
+def to_json(facts: list[WorldFact], events: list[ContradictionEvent] | None = None) -> str:
     """Serialise facts (and optionally events) to a JSON string.
 
     Args:
@@ -89,9 +88,7 @@ def to_json(
     return json.dumps(data, indent=2)
 
 
-def to_markdown(
-    facts: list[WorldFact], events: list[ContradictionEvent] | None = None
-) -> str:
+def to_markdown(facts: list[WorldFact], events: list[ContradictionEvent] | None = None) -> str:
     """Format facts (and optionally events) as a Markdown report.
 
     Args:
@@ -108,9 +105,7 @@ def to_markdown(
             "|--------|--------|-----------|-------|---|",
         ]
         for f in facts:
-            lines.append(
-                f"| {f.domain} | {f.entity} | {f.attribute} | {f.value} | {f.version} |"
-            )
+            lines.append(f"| {f.domain} | {f.entity} | {f.attribute} | {f.value} | {f.version} |")
     else:
         lines.append("*No world facts.*")
     if events:
