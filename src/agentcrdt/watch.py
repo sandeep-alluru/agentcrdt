@@ -18,7 +18,9 @@ class ChangeWatcher:
         # Snapshot: "entity::attribute" -> WorldFact
         self._last_snapshot: dict[str, WorldFact] = self._take_snapshot()
 
-    def on_change(self, entity: str | None = None, attribute: str | None = None) -> Callable[..., Any]:
+    def on_change(
+        self, entity: str | None = None, attribute: str | None = None
+    ) -> Callable[..., Any]:
         """Decorator: register a callback for when a matching fact changes."""
 
         def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
