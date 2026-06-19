@@ -60,14 +60,13 @@ class RuleEngine:
                 # This fact triggers the rule
                 if rule.implies_entity_same:
                     implied_key = (rule.implies_domain, f.entity, rule.implies_attribute)
-                    candidates = [by_key.get(implied_key)]
-                    candidates = [c for c in candidates if c is not None]
+                    candidates: list[WorldFact] = [c for c in [by_key.get(implied_key)] if c is not None]
                 else:
                     # Check all facts in implies_domain with implies_attribute (any entity)
                     candidates = [
                         g for g in facts.values()
                         if g.domain == rule.implies_domain and g.attribute == rule.implies_attribute
-                    ]
+                    ]  # facts.values() is WorldFact (non-optional)
                 for implied in candidates:
                     if implied.value != rule.implies_value:
                         evt = ContradictionEvent(

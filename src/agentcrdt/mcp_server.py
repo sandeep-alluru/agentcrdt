@@ -170,8 +170,8 @@ def run_server() -> None:
 
         elif name == "get_world_facts":
             store_path = arguments["store_path"]
-            domain = arguments.get("domain")
-            entity = arguments.get("entity")
+            domain: str | None = arguments.get("domain")
+            entity: str | None = arguments.get("entity")
 
             with WorldStore(store_path) as store:
                 facts = store.list_facts(domain=domain)
