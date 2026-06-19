@@ -211,6 +211,13 @@ agentcrdt is available on [Smithery](https://smithery.ai) — search for `agentc
 
 ---
 
+## Case Studies
+
+See how teams are using agentcrdt in production:
+
+- [Conflict-Free World State for 500k Concurrent MMO Players](docs/case-studies/gaming-mmo-world-state.md) — Cascade Games eliminates boss-fight HP flickering and enables 500k concurrent players
+- [Conflict-Free Shared Knowledge Base for a 6-Agent Research Pipeline](docs/case-studies/enterprise-multi-agent-research.md) — Cognition Labs reduces report synthesis from 3 hours to 12 minutes
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). PRs reviewed within 5 business days.
