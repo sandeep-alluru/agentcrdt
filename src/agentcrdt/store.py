@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import time as _time_mod
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +37,18 @@ class WorldStore:
         agent_a TEXT NOT NULL,
         agent_b TEXT NOT NULL,
         timestamp REAL NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS fact_history (
+        rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+        fact_id TEXT NOT NULL,
+        domain TEXT NOT NULL,
+        entity TEXT NOT NULL,
+        attribute TEXT NOT NULL,
+        value TEXT NOT NULL,
+        version INTEGER NOT NULL DEFAULT 0,
+        agent_id TEXT NOT NULL DEFAULT '',
+        timestamp REAL NOT NULL,
+        recorded_at REAL NOT NULL
     );
     """
 
@@ -81,6 +94,23 @@ class WorldStore:
                 fact.version,
                 fact.agent_id,
                 fact.timestamp,
+            ),
+        )
+        # Log to history
+        self._conn.execute(
+            "INSERT INTO fact_history (fact_id, domain, entity, attribute,"
+            " value, version, agent_id, timestamp, recorded_at)"
+            " VALUES (?,?,?,?,?,?,?,?,?)",
+            (
+                fact.id,
+                fact.domain,
+                fact.entity,
+                fact.attribute,
+                value_json,
+                fact.version,
+                fact.agent_id,
+                fact.timestamp,
+                _time_mod.time(),
             ),
         )
         self._conn.commit()
@@ -140,3 +170,27 @@ class WorldStore:
             )
             result.append(e)
         return result
+
+    def list_fact_history(self, fact_id: str) -> list[dict]:
+        """Return all historical rows for a fact_id ordered by recorded_at ASC."""
+        rows = self._conn.execute(
+            "SELECT * FROM fact_history WHERE fact_id=? ORDER BY recorded_at ASC",
+            (fact_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def list_fact_history_by_entity_attr(self, entity: str, attribute: str) -> list[dict]:
+        """Return all historical rows for entity+attribute, ordered by recorded_at ASC."""
+        rows = self._conn.execute(
+            "SELECT * FROM fact_history WHERE entity=? AND attribute=? ORDER BY recorded_at ASC",
+            (entity, attribute),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def list_fact_history_by_entity(self, entity: str) -> list[dict]:
+        """Return all historical rows for an entity, ordered by recorded_at ASC."""
+        rows = self._conn.execute(
+            "SELECT * FROM fact_history WHERE entity=? ORDER BY recorded_at ASC",
+            (entity,),
+        ).fetchall()
+        return [dict(r) for r in rows]
