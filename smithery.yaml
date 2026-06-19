@@ -1,0 +1,18 @@
+name: agentcrdt
+displayName: "AgentCRDT"
+description: "Semantic-causal CRDT — conflict-free agent-mutable world state with causal ordering"
+license: MIT
+homepage: https://github.com/sandeep-alluru/agentcrdt
+repository: https://github.com/sandeep-alluru/agentcrdt
+keywords:
+  - ai-agents
+  - crdt
+  - multi-agent
+  - mcp
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties: {}
+  commandFunction: |-
+    (config) => ({ command: "python", args: ["-m", "agentcrdt.mcp_server"] })
