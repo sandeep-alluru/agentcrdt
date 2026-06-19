@@ -108,6 +108,8 @@ with WorldStore("local.db") as local, WorldStore("remote.db") as remote:
     remote.set_fact(fact_b)
     result = WorldMerger(rule_engine=RuleEngine([rule])).merge(local, remote)
     print(result.conflicts)  # [ContradictionEvent(rule='dead-king-voids-treaty', ...)]
+# Note: the snippet above creates local.db and remote.db in the cwd; delete them when done.
+# For automatic cleanup wrap with tempfile.TemporaryDirectory() (see docs/quickstart.md).
 ```
 
 ---
@@ -139,7 +141,30 @@ agentcrdt --db world.db status
 
 ---
 
+## REST Server
+
+```bash
+pip install 'agentcrdt[api]'
+uvicorn agentcrdt.api:app --reload
+```
+
+Endpoints:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/fact` | Create or update a world fact |
+| `GET` | `/facts` | List facts (optional `?domain=` filter) |
+| `POST` | `/merge` | Merge a remote store into the local one |
+| `GET` | `/events` | List contradiction events |
+| `GET` | `/health` | Health check |
+
+---
+
 ## MCP / Claude Desktop Integration
+
+```bash
+pip install 'agentcrdt[mcp]'
+```
 
 Add to `~/.config/claude/claude_desktop_config.json`:
 

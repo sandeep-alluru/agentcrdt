@@ -124,6 +124,30 @@ class WorldStore:
         d["value"] = json.loads(d["value"])
         return WorldFact.from_dict(d)
 
+    def get_fact_by_key(self, domain: str, entity: str, attribute: str) -> WorldFact | None:
+        """Return a fact looked up by its natural key ``(domain, entity, attribute)``.
+
+        Convenience alternative to :meth:`get_fact` when you don't have the
+        SHA-256 ``fact_id`` at hand.
+
+        Args:
+            domain:    Fact domain, e.g. ``"life"``.
+            entity:    Entity name, e.g. ``"king"``.
+            attribute: Attribute name, e.g. ``"alive"``.
+
+        Returns:
+            The matching :class:`WorldFact`, or ``None`` if not found.
+        """
+        row = self._conn.execute(
+            "SELECT * FROM facts WHERE domain=? AND entity=? AND attribute=?",
+            (domain, entity, attribute),
+        ).fetchone()
+        if row is None:
+            return None
+        d = dict(row)
+        d["value"] = json.loads(d["value"])
+        return WorldFact.from_dict(d)
+
     def list_facts(self, domain: str | None = None) -> list[WorldFact]:
         """Return all stored facts, optionally filtered by *domain*."""
         if domain:

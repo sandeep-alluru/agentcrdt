@@ -34,7 +34,7 @@ def print_state(facts: list[WorldFact], console: Console | None = None) -> None:
     table.add_column("Domain", width=12)
     table.add_column("Entity", width=16)
     table.add_column("Attribute", width=16)
-    table.add_column("Value", no_wrap=False)
+    table.add_column("Value", no_wrap=False, min_width=20)
     table.add_column("v", width=4)
     for f in facts:
         table.add_row(f.id, f.domain, f.entity, f.attribute, str(f.value), str(f.version))

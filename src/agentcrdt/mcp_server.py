@@ -15,6 +15,7 @@ Add to Claude Desktop (~/.config/claude/claude_desktop_config.json):
 
 from __future__ import annotations
 
+import json
 import sys
 from typing import Any
 
@@ -36,16 +37,163 @@ def run_server() -> None:
         )
         sys.exit(1)
 
+    from agentcrdt.fact import WorldFact
+    from agentcrdt.merger import WorldMerger
+    from agentcrdt.store import WorldStore
+
     server = _Server("agentcrdt")
 
     @server.list_tools()
     async def list_tools() -> list[_mcp_types.Tool]:
-        # TODO: define tools matching your CLI commands
-        return []
+        return [
+            _mcp_types.Tool(
+                name="set_world_fact",
+                description=(
+                    "Create or update a world fact in a WorldStore. "
+                    "Uses LWW CRDT semantics (higher version wins, then timestamp)."
+                ),
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "store_path": {
+                            "type": "string",
+                            "description": "Path to the SQLite store file (created if absent).",
+                        },
+                        "domain": {
+                            "type": "string",
+                            "description": "Fact domain, e.g. 'life', 'alliance', 'possession'.",
+                        },
+                        "entity": {
+                            "type": "string",
+                            "description": "Entity name, e.g. 'king', 'treaty-1'.",
+                        },
+                        "attribute": {
+                            "type": "string",
+                            "description": "Attribute name, e.g. 'alive', 'valid', 'owner'.",
+                        },
+                        "value": {
+                            "description": "Fact value — string, number, or boolean.",
+                        },
+                        "author": {
+                            "type": "string",
+                            "description": "Agent ID that is asserting this fact.",
+                        },
+                        "version": {
+                            "type": "integer",
+                            "description": "CRDT version counter (default 0).",
+                            "default": 0,
+                        },
+                    },
+                    "required": ["store_path", "domain", "entity", "attribute", "value", "author"],
+                },
+            ),
+            _mcp_types.Tool(
+                name="get_world_facts",
+                description=(
+                    "Retrieve facts from a WorldStore, optionally filtered by domain and/or entity."
+                ),
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "store_path": {
+                            "type": "string",
+                            "description": "Path to the SQLite store file.",
+                        },
+                        "domain": {
+                            "type": "string",
+                            "description": "Optional domain filter.",
+                        },
+                        "entity": {
+                            "type": "string",
+                            "description": "Optional entity filter (applied after domain filter).",
+                        },
+                    },
+                    "required": ["store_path"],
+                },
+            ),
+            _mcp_types.Tool(
+                name="merge_world_state",
+                description=(
+                    "Merge a remote WorldStore into a local one using CRDT LWW semantics. "
+                    "Returns a summary of merged facts and any contradiction events detected."
+                ),
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "local_path": {
+                            "type": "string",
+                            "description": "Path to the local (target) SQLite store file.",
+                        },
+                        "remote_path": {
+                            "type": "string",
+                            "description": "Path to the remote (source) SQLite store file.",
+                        },
+                    },
+                    "required": ["local_path", "remote_path"],
+                },
+            ),
+        ]
 
     @server.call_tool()
-    async def call_tool(name: str, arguments: dict[str, Any]) -> list[_mcp_types.TextContent]:
-        raise ValueError(f"Unknown tool: {name}")
+    async def call_tool(
+        name: str, arguments: dict[str, Any]
+    ) -> list[_mcp_types.TextContent]:
+        if name == "set_world_fact":
+            store_path: str = arguments["store_path"]
+            domain: str = arguments["domain"]
+            entity: str = arguments["entity"]
+            attribute: str = arguments["attribute"]
+            value: Any = arguments["value"]
+            author: str = arguments["author"]
+            version: int = int(arguments.get("version", 0))
+
+            fact = WorldFact(
+                domain=domain,
+                entity=entity,
+                attribute=attribute,
+                value=value,
+                version=version,
+                agent_id=author,
+            )
+            with WorldStore(store_path) as store:
+                store.set_fact(fact)
+
+            result = {
+                "status": "ok",
+                "fact_id": fact.id,
+                "key": f"{domain}.{entity}.{attribute}",
+                "value": value,
+                "version": version,
+                "author": author,
+            }
+            return [_mcp_types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+        elif name == "get_world_facts":
+            store_path = arguments["store_path"]
+            domain = arguments.get("domain")
+            entity = arguments.get("entity")
+
+            with WorldStore(store_path) as store:
+                facts = store.list_facts(domain=domain)
+
+            if entity:
+                facts = [f for f in facts if f.entity == entity]
+
+            result = {"facts": [f.to_dict() for f in facts], "count": len(facts)}
+            return [_mcp_types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+        elif name == "merge_world_state":
+            local_path: str = arguments["local_path"]
+            remote_path: str = arguments["remote_path"]
+
+            with WorldStore(local_path) as local, WorldStore(remote_path) as remote:
+                merge_result = WorldMerger().merge(local, remote)
+
+            result = merge_result.to_dict()
+            return [_mcp_types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+        else:
+            raise ValueError(f"Unknown tool: {name}")
 
     import asyncio
 
