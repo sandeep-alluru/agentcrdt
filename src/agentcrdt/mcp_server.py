@@ -170,14 +170,14 @@ def run_server() -> None:
 
         elif name == "get_world_facts":
             store_path = arguments["store_path"]
-            domain: str | None = arguments.get("domain")
-            entity: str | None = arguments.get("entity")
+            domain_opt: str | None = arguments.get("domain")
+            entity_opt: str | None = arguments.get("entity")
 
             with WorldStore(store_path) as store:
-                facts = store.list_facts(domain=domain)
+                facts = store.list_facts(domain=domain_opt)
 
-            if entity:
-                facts = [f for f in facts if f.entity == entity]
+            if entity_opt:
+                facts = [f for f in facts if f.entity == entity_opt]
 
             result = {"facts": [f.to_dict() for f in facts], "count": len(facts)}
             return [_mcp_types.TextContent(type="text", text=json.dumps(result, indent=2))]
