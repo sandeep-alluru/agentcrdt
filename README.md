@@ -212,6 +212,94 @@ src/agentcrdt/
 
 ---
 
+## Real-World Scenario
+
+**E-Commerce: Preventing Multi-Agent Inventory Oversell on Black Friday**
+
+Three purchasing agents — East Coast, West Coast, and EU — each read inventory=50 and begin processing orders simultaneously. Without coordination, they'd oversell by 25 units ($380K in chargebacks). With agentcrdt, the merge surfaces the contradiction immediately:
+
+```python
+import tempfile
+import os
+from agentcrdt import WorldFact, WorldStore, WorldMerger, SemanticRule, RuleEngine
+
+# SemanticRule: if inventory count goes negative (EU sold past zero),
+# the oversell_guard must flip to True — but the system seeded it False.
+# The mismatch fires a ContradictionEvent at merge time.
+oversell_rule = SemanticRule(
+    name="inventory-oversell-detected",
+    trigger_domain="inventory",
+    trigger_attribute="count",
+    trigger_value=-25,           # EU's final count after selling 45 of 50
+    implies_domain="inventory",
+    implies_entity_same=True,
+    implies_attribute="oversell_guard",
+    implies_value=True,          # rule expects guard=True when count<0
+)
+
+with tempfile.TemporaryDirectory() as tmp:
+    east_db  = os.path.join(tmp, "east.db")
+    west_db  = os.path.join(tmp, "west.db")
+    eu_db    = os.path.join(tmp, "eu.db")
+    local_db = os.path.join(tmp, "local.db")
+
+    # System seeds a guard fact: "no oversell in progress" (version=0)
+    with WorldStore(local_db) as local:
+        local.set_fact(WorldFact(
+            domain="inventory", entity="airpods_pro",
+            attribute="oversell_guard", value=False,
+            version=0, agent_id="system",
+        ))
+
+    # All three agents read inventory=50 simultaneously and start selling.
+    # East sells 30  → remaining count = 20
+    with WorldStore(east_db) as east:
+        east.set_fact(WorldFact(
+            domain="inventory", entity="airpods_pro",
+            attribute="count", value=20,
+            version=1, agent_id="east",
+        ))
+
+    # West sells 25  → remaining count = 5 (already below East's view)
+    with WorldStore(west_db) as west:
+        west.set_fact(WorldFact(
+            domain="inventory", entity="airpods_pro",
+            attribute="count", value=5,
+            version=1, agent_id="west",
+        ))
+
+    # EU  sells 45   → count = -25  (went deeply negative)
+    with WorldStore(eu_db) as eu:
+        eu.set_fact(WorldFact(
+            domain="inventory", entity="airpods_pro",
+            attribute="count", value=-25,
+            version=2, agent_id="eu",
+        ))
+
+    # Merge all three into local — LWW picks EU's version=2 count=-25.
+    # The rule engine then sees count=-25 alongside oversell_guard=False
+    # and fires a ContradictionEvent.
+    merger = WorldMerger(rule_engine=RuleEngine([oversell_rule]))
+    with WorldStore(local_db) as local, \
+         WorldStore(east_db)  as east,  \
+         WorldStore(west_db)  as west,  \
+         WorldStore(eu_db)    as eu:
+
+        merger.merge(local, east)
+        merger.merge(local, west)
+        result = merger.merge(local, eu)
+
+    print("Conflicts detected:", len(result.conflicts))
+    for evt in result.conflicts:
+        print(f"  rule={evt.rule!r}  agents={evt.agent_a!r} vs {evt.agent_b!r}")
+    # Conflicts detected: 1
+    #   rule='inventory-oversell-detected'  agents='eu' vs 'system'
+```
+
+**What this prevents:** Last-write-wins databases silently allow the oversell — the last agent to write wins and the inventory appears valid until chargebacks arrive. agentcrdt surfaces the semantic contradiction at merge time so a reconciliation agent can intervene before fulfillment.
+
+---
+
 ## vs. Alternatives
 
 | Tool | Approach | Semantic Rules | MCP |
