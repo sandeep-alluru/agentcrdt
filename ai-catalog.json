@@ -1,0 +1,40 @@
+{
+  "$schema": "https://agenticresourcediscovery.org/schema/v1/catalog.json",
+  "version": "1.0.0",
+  "name": "AgentCRDT",
+  "description": "Semantic-causal CRDT for agent-mutable world state",
+  "publisher": {
+    "name": "Sandeep Alluru",
+    "email": "onepuncchh@gmail.com",
+    "url": "https://github.com/sandeep-alluru"
+  },
+  "tools": [
+    {
+      "id": "io.github.sandeep-alluru/agentcrdt",
+      "name": "agentcrdt",
+      "title": "AgentCRDT",
+      "description": "Semantic-causal CRDT for agent-mutable world state",
+      "version": "0.1.0",
+      "protocol": "mcp",
+      "transport": "stdio",
+      "install": {
+        "pypi": {
+          "package": "agentcrdt",
+          "extras": [
+            "mcp"
+          ],
+          "runtimeHint": "uvx"
+        }
+      },
+      "invocation": {
+        "command": "agentcrdt-mcp"
+      },
+      "repository": {
+        "url": "https://github.com/sandeep-alluru/agentcrdt",
+        "source": "github"
+      },
+      "homepage": "https://github.com/sandeep-alluru/agentcrdt",
+      "license": "MIT"
+    }
+  ]
+}

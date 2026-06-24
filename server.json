@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.sandeep-alluru/agentcrdt",
+  "title": "AgentCRDT",
+  "description": "Semantic-causal CRDT for agent-mutable world state",
+  "version": "0.1.1",
+  "websiteUrl": "https://github.com/sandeep-alluru/agentcrdt",
+  "repository": {
+    "url": "https://github.com/sandeep-alluru/agentcrdt",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "agentcrdt",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
