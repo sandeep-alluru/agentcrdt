@@ -1,4 +1,5 @@
 """Tests for WorldMerger CRDT merge semantics."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -20,8 +21,14 @@ def _make_fact(
     agent_id: str = "",
     timestamp: float | None = None,
 ) -> WorldFact:
-    f = WorldFact(domain=domain, entity=entity, attribute=attribute, value=value,
-                  version=version, agent_id=agent_id)
+    f = WorldFact(
+        domain=domain,
+        entity=entity,
+        attribute=attribute,
+        value=value,
+        version=version,
+        agent_id=agent_id,
+    )
     if timestamp is not None:
         f.timestamp = timestamp
     return f
@@ -73,9 +80,7 @@ class TestBasicMerge:
         result = WorldMerger().merge(local_store, remote_store)
         assert result.merged_count == 5
 
-    def test_merge_result_to_dict(
-        self, local_store: WorldStore, remote_store: WorldStore
-    ) -> None:
+    def test_merge_result_to_dict(self, local_store: WorldStore, remote_store: WorldStore) -> None:
         """MergeResult.to_dict must include merged_count and conflicts."""
         fact = _make_fact()
         remote_store.set_fact(fact)
@@ -88,9 +93,7 @@ class TestBasicMerge:
 class TestIdempotentMerge:
     """Tests for idempotency under repeated merges."""
 
-    def test_idempotent_merge(
-        self, local_store: WorldStore, remote_store: WorldStore
-    ) -> None:
+    def test_idempotent_merge(self, local_store: WorldStore, remote_store: WorldStore) -> None:
         """Merging the same remote twice must not duplicate facts in local."""
         fact = _make_fact()
         remote_store.set_fact(fact)
@@ -117,15 +120,23 @@ class TestContradictionDetection:
         """If king dies (agent-A) and treaty is still valid (agent-B), contradiction fires."""
         # agent-A sets king.alive=False
         king_dead = _make_fact(
-            domain="life", entity="king", attribute="alive", value=False,
-            version=1, agent_id="agent-A",
+            domain="life",
+            entity="king",
+            attribute="alive",
+            value=False,
+            version=1,
+            agent_id="agent-A",
         )
         local_store.set_fact(king_dead)
 
         # agent-B sets treaty.valid=True (inconsistent with dead king)
         treaty_valid = _make_fact(
-            domain="alliance", entity="king", attribute="valid", value=True,
-            version=1, agent_id="agent-B",
+            domain="alliance",
+            entity="king",
+            attribute="valid",
+            value=True,
+            version=1,
+            agent_id="agent-B",
         )
         remote_store.set_fact(treaty_valid)
 
@@ -151,13 +162,21 @@ class TestContradictionDetection:
     ) -> None:
         """Contradiction events must be persisted in the local store."""
         king_dead = _make_fact(
-            domain="life", entity="king", attribute="alive", value=False,
-            version=1, agent_id="agent-A",
+            domain="life",
+            entity="king",
+            attribute="alive",
+            value=False,
+            version=1,
+            agent_id="agent-A",
         )
         local_store.set_fact(king_dead)
         treaty_valid = _make_fact(
-            domain="alliance", entity="king", attribute="valid", value=True,
-            version=1, agent_id="agent-B",
+            domain="alliance",
+            entity="king",
+            attribute="valid",
+            value=True,
+            version=1,
+            agent_id="agent-B",
         )
         remote_store.set_fact(treaty_valid)
 
@@ -183,13 +202,21 @@ class TestContradictionDetection:
     ) -> None:
         """No contradiction when both king is dead and treaty is voided."""
         king_dead = _make_fact(
-            domain="life", entity="king", attribute="alive", value=False,
-            version=1, agent_id="agent-A",
+            domain="life",
+            entity="king",
+            attribute="alive",
+            value=False,
+            version=1,
+            agent_id="agent-A",
         )
         local_store.set_fact(king_dead)
         treaty_void = _make_fact(
-            domain="alliance", entity="king", attribute="valid", value=False,
-            version=1, agent_id="agent-B",
+            domain="alliance",
+            entity="king",
+            attribute="valid",
+            value=False,
+            version=1,
+            agent_id="agent-B",
         )
         remote_store.set_fact(treaty_void)
 

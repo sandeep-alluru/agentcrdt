@@ -1,4 +1,5 @@
 """Tests for WorldFact and ContradictionEvent primitives."""
+
 from __future__ import annotations
 
 import time

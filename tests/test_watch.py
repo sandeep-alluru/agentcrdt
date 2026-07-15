@@ -1,7 +1,4 @@
 """Tests for agentcrdt.watch module."""
-import time
-
-import pytest
 
 from agentcrdt.fact import WorldFact
 from agentcrdt.store import WorldStore
@@ -44,10 +41,14 @@ def test_check_no_duplicate_on_second_call(tmp_path):
 
 def test_check_detects_update(tmp_path):
     store = _store(tmp_path)
-    f1 = WorldFact(domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=1.0)
+    f1 = WorldFact(
+        domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=1.0
+    )
     store.set_fact(f1)
     watcher = ChangeWatcher(store)
-    f2 = WorldFact(domain="life", entity="king", attribute="alive", value=False, version=2, timestamp=2.0)
+    f2 = WorldFact(
+        domain="life", entity="king", attribute="alive", value=False, version=2, timestamp=2.0
+    )
     store.set_fact(f2)
     changed = watcher.check()
     assert len(changed) == 1

@@ -1,7 +1,6 @@
 """Tests for agentcrdt.history module."""
-import time
 
-import pytest
+import time
 
 from agentcrdt.fact import WorldFact
 from agentcrdt.history import FactHistory, FactVersion
@@ -35,8 +34,12 @@ def test_get_history_single_version(tmp_path):
 
 def test_get_history_multiple_versions(tmp_path):
     store = _store(tmp_path)
-    f1 = WorldFact(domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=1.0)
-    f2 = WorldFact(domain="life", entity="king", attribute="alive", value=False, version=2, timestamp=2.0)
+    f1 = WorldFact(
+        domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=1.0
+    )
+    f2 = WorldFact(
+        domain="life", entity="king", attribute="alive", value=False, version=2, timestamp=2.0
+    )
     store.set_fact(f1)
     store.set_fact(f2)
     history = FactHistory(store)
@@ -49,8 +52,12 @@ def test_get_history_multiple_versions(tmp_path):
 def test_get_history_superseded_by_direction(tmp_path):
     """superseded_by must point to the NEWER fact (the one that replaced it)."""
     store = _store(tmp_path)
-    f1 = WorldFact(domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=1.0)
-    f2 = WorldFact(domain="life", entity="king", attribute="alive", value=False, version=2, timestamp=2.0)
+    f1 = WorldFact(
+        domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=1.0
+    )
+    f2 = WorldFact(
+        domain="life", entity="king", attribute="alive", value=False, version=2, timestamp=2.0
+    )
     store.set_fact(f1)
     store.set_fact(f2)
     history = FactHistory(store)
@@ -69,9 +76,15 @@ def test_get_history_superseded_by_direction(tmp_path):
 def test_get_history_version_index(tmp_path):
     """version_index: 0 = oldest, len-1 = newest."""
     store = _store(tmp_path)
-    f1 = WorldFact(domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=1.0)
-    f2 = WorldFact(domain="life", entity="king", attribute="alive", value=False, version=2, timestamp=2.0)
-    f3 = WorldFact(domain="life", entity="king", attribute="alive", value=None, version=3, timestamp=3.0)
+    f1 = WorldFact(
+        domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=1.0
+    )
+    f2 = WorldFact(
+        domain="life", entity="king", attribute="alive", value=False, version=2, timestamp=2.0
+    )
+    f3 = WorldFact(
+        domain="life", entity="king", attribute="alive", value=None, version=3, timestamp=3.0
+    )
     store.set_fact(f1)
     store.set_fact(f2)
     store.set_fact(f3)
@@ -91,10 +104,19 @@ def test_get_history_version_index(tmp_path):
 def test_get_at_time(tmp_path):
     store = _store(tmp_path)
     t_base = time.time()
-    f1 = WorldFact(domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=t_base)
+    f1 = WorldFact(
+        domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=t_base
+    )
     store.set_fact(f1)
     time.sleep(0.05)
-    f2 = WorldFact(domain="life", entity="king", attribute="alive", value=False, version=2, timestamp=t_base + 1.0)
+    f2 = WorldFact(
+        domain="life",
+        entity="king",
+        attribute="alive",
+        value=False,
+        version=2,
+        timestamp=t_base + 1.0,
+    )
     store.set_fact(f2)
 
     history = FactHistory(store)
@@ -107,7 +129,9 @@ def test_get_at_time(tmp_path):
 
 def test_get_at_time_before_any(tmp_path):
     store = _store(tmp_path)
-    f = WorldFact(domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=100.0)
+    f = WorldFact(
+        domain="life", entity="king", attribute="alive", value=True, version=1, timestamp=100.0
+    )
     store.set_fact(f)
     history = FactHistory(store)
     fact = history.get_at_time("king", "alive", 0.0)

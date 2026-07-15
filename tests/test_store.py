@@ -1,4 +1,5 @@
 """Tests for WorldStore SQLite persistence."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -26,8 +27,14 @@ def _make_fact(
     agent_id: str = "",
     timestamp: float | None = None,
 ) -> WorldFact:
-    f = WorldFact(domain=domain, entity=entity, attribute=attribute, value=value,
-                  version=version, agent_id=agent_id)
+    f = WorldFact(
+        domain=domain,
+        entity=entity,
+        attribute=attribute,
+        value=value,
+        version=version,
+        agent_id=agent_id,
+    )
     if timestamp is not None:
         f.timestamp = timestamp
     return f

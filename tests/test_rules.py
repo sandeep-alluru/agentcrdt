@@ -1,4 +1,5 @@
 """Tests for SemanticRule and RuleEngine."""
+
 from __future__ import annotations
 
 from agentcrdt.fact import WorldFact

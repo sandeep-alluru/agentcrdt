@@ -1,4 +1,5 @@
 """Tests for the agentcrdt Click CLI using CliRunner."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -61,17 +62,13 @@ class TestSetCommand:
 
     def test_set_stores_fact(self, runner: CliRunner, db_path: str) -> None:
         """set must store a fact and print confirmation."""
-        result = runner.invoke(
-            main, ["--db", db_path, "set", "life", "king", "alive", "True"]
-        )
+        result = runner.invoke(main, ["--db", db_path, "set", "life", "king", "alive", "True"])
         assert result.exit_code == 0
         assert "life.king.alive" in result.output
 
     def test_set_boolean_value(self, runner: CliRunner, db_path: str) -> None:
         """set must parse Python literals correctly."""
-        result = runner.invoke(
-            main, ["--db", db_path, "set", "life", "king", "alive", "False"]
-        )
+        result = runner.invoke(main, ["--db", db_path, "set", "life", "king", "alive", "False"])
         assert result.exit_code == 0
 
     def test_set_string_value(self, runner: CliRunner, db_path: str) -> None:
@@ -111,9 +108,7 @@ class TestGetCommand:
 
     def test_get_nonexistent_exits_1(self, runner: CliRunner, db_path: str) -> None:
         """get for a missing fact must exit with code 1."""
-        result = runner.invoke(
-            main, ["--db", db_path, "get", "nonexistent", "entity", "attr"]
-        )
+        result = runner.invoke(main, ["--db", db_path, "get", "nonexistent", "entity", "attr"])
         assert result.exit_code == 1
 
 
@@ -124,9 +119,7 @@ class TestMergeCommand:
         """merge must transfer facts from the other DB."""
         local_db = str(tmp_path / "local.db")
         remote_db = str(tmp_path / "remote.db")
-        runner.invoke(
-            main, ["--db", remote_db, "set", "life", "king", "alive", "True"]
-        )
+        runner.invoke(main, ["--db", remote_db, "set", "life", "king", "alive", "True"])
         result = runner.invoke(main, ["--db", local_db, "merge", remote_db])
         assert result.exit_code == 0
         assert "Merged" in result.output

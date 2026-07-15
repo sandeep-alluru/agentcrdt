@@ -1,4 +1,5 @@
 """Tests for report formatters (Rich, JSON, Markdown)."""
+
 from __future__ import annotations
 
 import io

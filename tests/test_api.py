@@ -1,4 +1,5 @@
 """Tests for the FastAPI REST server."""
+
 from __future__ import annotations
 
 from pathlib import Path
