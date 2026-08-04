@@ -35,3 +35,7 @@ Do not cache code constants as world state (Foundry POLYMATTER_RECIPE class)
 ## Daily rotation note
 
 This file exists so pillar **C (closed loop)** can rise with real wiring over time. Prefer small daily commits that move a checkbox toward done.
+
+## Auto-run 2026-08-04
+- pytest_rc: 0
+- node: clawer-samurai-2
