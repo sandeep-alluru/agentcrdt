@@ -1,6 +1,6 @@
 # Closed loop — `agentcrdt`
 
-**Status:** stub (eagle-eyes Phase 0 / 2026-08-04)  
+**Status:** reader wired (eagle-eyes / 2026-08-05) — **CONST-AS-STATE**  
 **Owner loop:** Multi-agent only
 
 ## Load-bearing job
@@ -9,11 +9,14 @@ Semantic-causal CRDT merge for multi-writer agent state
 
 ## Who reads the output?
 
-Merger consumers read ContradictionEvents
+- Library: `gate_world_state` / `refuse_constant_write` / `set_fact_if_mutable`
+- Merger consumers still read ContradictionEvents for *mutable* conflicts
 
 ## What outcome changes?
 
-Conflict becomes observable event, not silent LWW of constants
+Conflict becomes observable event, not silent LWW of constants.
+**CONST-AS-STATE:** writes to `recipe` / `polymatter_recipe` / `config` / … → FAIL;
+constant-only store → FAIL; empty → FAIL_LOUD.
 
 ## When NOT to use (anti-ornament)
 
@@ -21,9 +24,9 @@ Do not cache code constants as world state (Foundry POLYMATTER_RECIPE class)
 
 ## Non-Ornament checklist
 
-- [ ] Reader implemented in CI, gate, or eagle-eyes script
-- [ ] Empty/wrong output fails loudly
-- [ ] Not exposed as free MCP in product agents
+- [x] Reader implemented in library (`closed_loop.gate_world_state`)
+- [x] Empty/wrong output fails loudly (exit 2 / 1)
+- [x] Not exposed as free MCP that auto-accepts constant domains
 - [ ] Linked gap IDs in mem0 when improving
 
 ## Related failures (farm memory)
