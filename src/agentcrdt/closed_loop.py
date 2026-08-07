@@ -1,12 +1,15 @@
-"""Closed-loop gates for agentcrdt (CONST-AS-STATE / Non-Ornament).
+"""Closed-loop gates for agentcrdt (CONST-AS-STATE + MAST multi-agent).
 
 Who reads the output?
   Multi-agent merger consumers, CI, eagle-eyes — anything that must refuse
-  caching *code constants* (recipes, fixed configs) as CRDT world state.
+  caching *code constants* (recipes, fixed configs) as CRDT world state, and
+  refuse silent LWW of divergent multi-agent claims (MAST / ICLR class).
 
 What outcome changes?
   Constant-only domains are rejected at write and at gate time (FAIL / FAIL_LOUD).
   Empty stores FAIL_LOUD. Mutable world facts can merge and PASS.
+  Unresolved ContradictionEvents above budget → FAIL.
+  Silent value divergences (history: ≥2 agents, ≥2 values, no event) → FAIL.
 
 Farm case CONST-AS-STATE:
   POLYMATTER_RECIPE (and similar) was treated as multi-writer world state and
@@ -14,16 +17,20 @@ Farm case CONST-AS-STATE:
   must refuse constant-only domains so conflicts surface as policy errors, not
   silent last-write-wins of recipes.
 
-Public map (Track B): multi-agent coordination failures (FedCritic, History
-Matters, multi-agent planning) — shared state must be *world* state, not code.
+Public map (Track B):
+  * MAST / AdaMAST multi-agent failure taxonomies
+  * ICLR 2026 multi-agent failures / AgentPulse
+  * FedCritic, History Matters — shared state must be *world* state + conflicts
 """
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any, Iterable
 
 from agentcrdt.fact import WorldFact
+from agentcrdt.merger import MergeResult
 from agentcrdt.store import WorldStore
 
 # Domains that are code/config constants — never CRDT world state.
@@ -81,6 +88,10 @@ class GateOutcome:
         constant_count: Facts in constant-only domains.
         constant_domains: Distinct constant domains seen.
         refused_writes: Count of writes refused (when gating a write batch).
+        conflict_count: Unresolved ContradictionEvents (MAST path).
+        divergence_count: Silent multi-agent value divergences detected.
+        human_required: True when multi-agent conflict needs human resolve.
+        contested_keys: Sample of entity.attribute keys that diverged.
     """
 
     ok: bool
@@ -92,6 +103,10 @@ class GateOutcome:
     constant_count: int = 0
     constant_domains: tuple[str, ...] = ()
     refused_writes: int = 0
+    conflict_count: int = 0
+    divergence_count: int = 0
+    human_required: bool = False
+    contested_keys: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -104,6 +119,39 @@ class GateOutcome:
             "constant_count": self.constant_count,
             "constant_domains": list(self.constant_domains),
             "refused_writes": self.refused_writes,
+            "conflict_count": self.conflict_count,
+            "divergence_count": self.divergence_count,
+            "human_required": self.human_required,
+            "contested_keys": list(self.contested_keys),
+        }
+
+
+@dataclass(frozen=True)
+class ValueDivergence:
+    """A fact key where ≥2 agents wrote ≥2 distinct values (MAST silent LWW)."""
+
+    fact_id: str
+    domain: str
+    entity: str
+    attribute: str
+    agents: tuple[str, ...]
+    values: tuple[str, ...]  # JSON-serialised for hashability
+    version_count: int
+
+    @property
+    def key(self) -> str:
+        return f"{self.domain}.{self.entity}.{self.attribute}"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "fact_id": self.fact_id,
+            "domain": self.domain,
+            "entity": self.entity,
+            "attribute": self.attribute,
+            "agents": list(self.agents),
+            "values": list(self.values),
+            "version_count": self.version_count,
+            "key": self.key,
         }
 
 
@@ -317,6 +365,217 @@ def assert_mutable_write(
 ) -> GateOutcome:
     """Raise :class:`ClosedLoopError` if *fact* is a constant-domain write."""
     outcome = refuse_constant_write(fact, **kwargs)
+    if not outcome.ok:
+        raise ClosedLoopError(f"{outcome.verdict}: {outcome.reason}")
+    return outcome
+
+
+# ---------------------------------------------------------------------------
+# MAST / multi-agent coordination — silent divergence + unresolved conflicts
+# ---------------------------------------------------------------------------
+
+
+def detect_silent_divergences(store: WorldStore) -> list[ValueDivergence]:
+    """Find fact keys with multi-agent multi-value history and no contradiction event.
+
+    MAST / ICLR multi-agent failure class: agents write incompatible values for
+    the same ``domain.entity.attribute``; LWW keeps one winner and **no**
+    :class:`~agentcrdt.fact.ContradictionEvent` is recorded — consumers see a
+    single "truth" that is actually contested.
+
+    Uses ``fact_history`` rows. A divergence requires:
+
+    * ≥ 2 distinct agent_ids (non-empty preferred)
+    * ≥ 2 distinct values
+    * no store event that lists this ``fact_id`` in ``facts_involved``
+    """
+    if not isinstance(store, WorldStore):
+        raise TypeError("detect_silent_divergences requires WorldStore (needs history)")
+
+    events = store.list_events()
+    covered: set[str] = set()
+    for ev in events:
+        for fid in ev.facts_involved:
+            covered.add(fid)
+
+    facts = store.list_facts()
+    out: list[ValueDivergence] = []
+    seen_keys: set[str] = set()
+
+    for fact in facts:
+        if fact.id in covered:
+            continue
+        hist = store.list_fact_history(fact.id)
+        if len(hist) < 2:
+            continue
+        values: set[str] = set()
+        agents: set[str] = set()
+        for row in hist:
+            values.add(str(row.get("value", "")))
+            # Blank agent_id → "anonymous" so multi-blank writers still count.
+            aid = str(row.get("agent_id") or "").strip() or "anonymous"
+            agents.add(aid)
+        if len(values) < 2:
+            continue
+        if len(agents) < 2:
+            # Single agent overwriting itself is versioning, not MAST conflict.
+            continue
+
+        key = f"{fact.domain}.{fact.entity}.{fact.attribute}"
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        out.append(
+            ValueDivergence(
+                fact_id=fact.id,
+                domain=fact.domain,
+                entity=fact.entity,
+                attribute=fact.attribute,
+                agents=tuple(sorted(agents)),
+                values=tuple(sorted(values)),
+                version_count=len(hist),
+            )
+        )
+    return out
+
+
+def gate_multi_agent(
+    store: WorldStore,
+    *,
+    max_unresolved_events: int = 0,
+    refuse_silent_divergence: bool = True,
+    require_facts: bool = True,
+) -> GateOutcome:
+    """Gate a world store for MAST multi-agent coordination failures.
+
+    Load-bearing controls:
+
+    1. Empty store → **FAIL_LOUD** (when ``require_facts``).
+    2. Unresolved :class:`~agentcrdt.fact.ContradictionEvent` count above
+       ``max_unresolved_events`` → **FAIL** (``human_required``).
+    3. Silent value divergences (history multi-agent multi-value, no event) →
+       **FAIL** when ``refuse_silent_divergence`` (MAST silent LWW).
+
+    Pair with :func:`gate_world_state` for CONST-AS-STATE domain checks.
+    """
+    if not isinstance(store, WorldStore):
+        return _fail_loud(
+            "MAST: gate_multi_agent requires WorldStore",
+            human_required=True,
+        )
+
+    facts = store.list_facts()
+    n = len(facts)
+    if require_facts and n == 0:
+        return _fail_loud(
+            "MAST: empty world store — no multi-agent state to coordinate",
+            fact_count=0,
+            human_required=True,
+        )
+
+    events = store.list_events()
+    n_events = len(events)
+    if n_events > max_unresolved_events:
+        contested = tuple(
+            sorted(
+                {
+                    f"{e.agent_a}|{e.agent_b}|{e.rule}"
+                    for e in events[:20]
+                }
+            )[:10]
+        )
+        return _fail(
+            f"MAST: {n_events} unresolved contradiction event(s) "
+            f"(max={max_unresolved_events}) — multi-agent conflict not resolved "
+            f"(ICLR/AgentPulse class)",
+            fact_count=n,
+            conflict_count=n_events,
+            divergence_count=0,
+            human_required=True,
+            contested_keys=contested,
+        )
+
+    divergences: list[ValueDivergence] = []
+    if refuse_silent_divergence:
+        divergences = detect_silent_divergences(store)
+        if divergences:
+            keys = tuple(d.key for d in divergences[:10])
+            return _fail(
+                f"MAST: {len(divergences)} silent value divergence(s) "
+                f"(multi-agent multi-value history without ContradictionEvent) "
+                f"keys={list(keys)} — refuse silent LWW as truth "
+                f"(AdaMAST/ICLR multi-agent failure class)",
+                fact_count=n,
+                conflict_count=n_events,
+                divergence_count=len(divergences),
+                human_required=True,
+                contested_keys=keys,
+            )
+
+    return GateOutcome(
+        ok=True,
+        verdict="PASS",
+        reason=(
+            f"multi-agent state ok: facts={n} events={n_events} "
+            f"divergences=0 max_events={max_unresolved_events}"
+        ),
+        exit_code=0,
+        fact_count=n,
+        conflict_count=n_events,
+        divergence_count=0,
+        human_required=False,
+    )
+
+
+def gate_merge_result(
+    result: MergeResult,
+    *,
+    max_conflicts: int = 0,
+    min_merged: int = 0,
+) -> GateOutcome:
+    """Gate a :class:`~agentcrdt.merger.MergeResult` after multi-agent merge.
+
+    * ``merged_count < min_merged`` → FAIL_LOUD (empty merge ornament)
+    * ``len(conflicts) > max_conflicts`` → FAIL (human_required)
+    * clean merge → PASS
+    """
+    if not isinstance(result, MergeResult):
+        return _fail_loud(
+            "MAST: gate_merge_result requires MergeResult",
+            human_required=True,
+        )
+    n_merged = int(result.merged_count)
+    n_conf = len(result.conflicts or [])
+    if n_merged < min_merged:
+        return _fail_loud(
+            f"MAST: merge merged_count={n_merged} < min_merged={min_merged} "
+            f"— empty/ornament merge",
+            fact_count=n_merged,
+            conflict_count=n_conf,
+            human_required=True,
+        )
+    if n_conf > max_conflicts:
+        return _fail(
+            f"MAST: merge produced {n_conf} conflict(s) (max={max_conflicts}) "
+            f"— refuse post-merge continue without resolution",
+            fact_count=n_merged,
+            conflict_count=n_conf,
+            human_required=True,
+        )
+    return GateOutcome(
+        ok=True,
+        verdict="PASS",
+        reason=f"merge ok: merged={n_merged} conflicts={n_conf}",
+        exit_code=0,
+        fact_count=n_merged,
+        conflict_count=n_conf,
+        human_required=False,
+    )
+
+
+def assert_multi_agent_ok(store: WorldStore, **kwargs: Any) -> GateOutcome:
+    """Raise :class:`ClosedLoopError` unless :func:`gate_multi_agent` is ok."""
+    outcome = gate_multi_agent(store, **kwargs)
     if not outcome.ok:
         raise ClosedLoopError(f"{outcome.verdict}: {outcome.reason}")
     return outcome
