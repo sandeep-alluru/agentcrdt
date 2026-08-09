@@ -85,9 +85,44 @@ failures = no** until this ship:
 ideally run a `RuleEngine` so conflicts become events). Silent LWW alone is
 not a coordination protocol.
 
+---
+
+## Case COVERT-COLLUSION — population steganalysis (arXiv 2608.02698)
+
+**Source:** Track B research (`20260809T121239Z`) —
+[Steganalysis of Adaptive Covert Collusion in Tool-Using Agent Populations](https://arxiv.org/abs/2608.02698).
+
+**What fails:**
+
+1. Multiple agents quietly coordinate while each trace looks well-behaved.
+2. Single-agent safeguards miss **shared rare payloads**, **synchronized
+   tool timing**, and **side-channel codes**.
+3. MAST-MULTI only sees value divergence — not black-box behavioural collusion.
+
+**Product in this repo:**
+
+| Control | API |
+|---------|-----|
+| Event type | `AgentTraceEvent` |
+| Detector | `detect_covert_collusion` → `CollusionReport` |
+| Gate | `gate_covert_collusion(...)` |
+| Raise form | `assert_no_covert_collusion` |
+
+**Rules (load-bearing):**
+
+- Empty / single-agent inventory → **FAIL_LOUD**
+- Shared rare payload / sync timing / side-channel across agents → **FAIL**
+- Independent diverse traces → **PASS**
+
+**Tests:** `tests/test_covert_collusion.py`
+
+**Non-Ornament:** Call `gate_covert_collusion` on multi-agent tool traces before
+treating agents as independent. Pair with `gate_multi_agent` for CRDT values.
+
 ## Related queue IDs
 
 - **CONST-AS-STATE** — this case (P2)
 - **MAST-MULTI** — silent multi-agent divergence (this section)
+- **COVERT-COLLUSION** — behavioural collusion (this section)
 - **NORM-ENFORCE** (normsync) — unattended action without norm
 - **POLICY-ARBITRATION** (rulegraph) — COI / endorse rules
