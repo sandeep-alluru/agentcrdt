@@ -168,6 +168,6 @@ with tempfile.TemporaryDirectory() as tmp:
 ## Next Steps
 
 - **CLI**: `agentcrdt --help` — set, get, merge, and inspect facts from the shell.
-- **REST API**: see [REST Server](../README.md#rest-server) for FastAPI endpoints.
-- **MCP / Claude Desktop**: see [MCP Integration](../README.md#mcp--claude-desktop-integration).
+- **REST API**: see [REST Server](https://github.com/sandeep-alluru/agentcrdt/blob/main/README.md#rest-server) for FastAPI endpoints.
+- **MCP / Claude Desktop**: see [MCP Integration](https://github.com/sandeep-alluru/agentcrdt/blob/main/README.md#mcp--claude-desktop-integration).
 - **Python API reference**: `pydoc agentcrdt` or the inline docstrings in `src/agentcrdt/`.
