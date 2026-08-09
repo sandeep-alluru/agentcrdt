@@ -51,7 +51,7 @@ def test_conflict_report_by_rule_count(tmp_path):
         )
         store.add_event(e)
     summary = conflict_report(store)
-    # All 3 have same id due to content-addressing (dedup) — so might be 1
+    # All 3 have same id due to content-addressing (dedup) - so might be 1
     assert summary.total_conflicts >= 1
     store.close()
 

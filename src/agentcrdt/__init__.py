@@ -1,4 +1,4 @@
-"""agentcrdt — Semantic-causal CRDT for agent-mutable world state."""
+"""agentcrdt - Semantic-causal CRDT for agent-mutable world state."""
 
 from __future__ import annotations
 

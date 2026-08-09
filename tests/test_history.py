@@ -64,7 +64,7 @@ def test_get_history_superseded_by_direction(tmp_path):
     # get_history returns newest-first
     versions = history.get_history("king", "alive")
     assert len(versions) == 2
-    # versions[0] is the newest (version=2) — it was NOT superseded
+    # versions[0] is the newest (version=2) - it was NOT superseded
     newest = versions[0]
     oldest = versions[1]
     assert newest.superseded_by is None

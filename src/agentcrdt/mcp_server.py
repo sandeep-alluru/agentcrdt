@@ -73,7 +73,7 @@ def run_server() -> None:
                             "description": "Attribute name, e.g. 'alive', 'valid', 'owner'.",
                         },
                         "value": {
-                            "description": "Fact value — string, number, or boolean.",
+                            "description": "Fact value - string, number, or boolean.",
                         },
                         "author": {
                             "type": "string",

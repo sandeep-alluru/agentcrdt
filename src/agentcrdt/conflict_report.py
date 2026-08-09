@@ -1,4 +1,4 @@
-"""Conflict reporting — summarize ContradictionEvents from a WorldStore."""
+"""Conflict reporting - summarize ContradictionEvents from a WorldStore."""
 
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ def conflict_report(store: WorldStore) -> ConflictSummary:
     # Sort most contested entities by count
     most_contested = sorted(by_entity, key=lambda e: by_entity[e], reverse=True)[:5]
 
-    # resolution_rate: entity diversity measure — fraction of conflicts caused by unique entities.
+    # resolution_rate: entity diversity measure - fraction of conflicts caused by unique entities.
     # A value closer to 0 means a single entity is causing nearly all conflicts;
     # closer to 1 means conflicts are spread across many different entities.
     unique_entities = len(summary_by_entity) if (summary_by_entity := by_entity) else 0

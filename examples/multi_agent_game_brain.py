@@ -39,15 +39,12 @@ import tempfile
 import time
 from pathlib import Path
 
-# ── agentcrdt ────────────────────────────────────────────────────────────────
-from agentcrdt.fact import WorldFact
-from agentcrdt.merger import WorldMerger
-from agentcrdt.rules import RuleEngine, SemanticRule
-from agentcrdt.store import WorldStore
-
 # ── normsync ─────────────────────────────────────────────────────────────────
 from normsync.monitor import NormMonitor
 from normsync.norm import AgentAction, WorldNorm
+
+# ── rulegraph ─────────────────────────────────────────────────────────────────
+from rulegraph.rule import RuleArbiter, RuleEdge, RuleGraph, RuleNode, RuleStore
 
 # ── worldoracle ──────────────────────────────────────────────────────────────
 from worldoracle.predicate import (
@@ -57,9 +54,11 @@ from worldoracle.predicate import (
     WorldPredicate,
 )
 
-# ── rulegraph ─────────────────────────────────────────────────────────────────
-from rulegraph.rule import RuleArbiter, RuleEdge, RuleGraph, RuleNode, RuleStore
-
+# ── agentcrdt ────────────────────────────────────────────────────────────────
+from agentcrdt.fact import WorldFact
+from agentcrdt.merger import WorldMerger
+from agentcrdt.rules import RuleEngine, SemanticRule
+from agentcrdt.store import WorldStore
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
@@ -464,7 +463,7 @@ def step4_worldoracle() -> None:
         frame = repairer.repair(pred_a, pred_b)
         repairs.append(frame)
 
-        print(f"\n  REPAIR PROPOSAL:")
+        print("\n  REPAIR PROPOSAL:")
         print(f"    Strategy:       {frame.strategy}")
         print(f"    Resolved value: {frame.resolved_value!r}")
         print(f"    Reason:         {frame.reason}")

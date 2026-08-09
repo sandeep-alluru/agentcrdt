@@ -42,7 +42,7 @@ def print_world_state(store: WorldStore, title: str = "Merged World State") -> N
         print("  (no facts)")
         return
     for f in sorted(facts, key=lambda f: f.attribute):
-        print(f"  {f.attribute:<22} = {str(f.value):<20}  "
+        print(f"  {f.attribute:<22} = {f.value!s:<20}  "
               f"[source: {f.agent_id:<20}  ts_offset: +{f.timestamp - ts():.0f}s]")
     print()
 
@@ -214,10 +214,10 @@ def main() -> None:
             events = master.list_events()
 
         print_separator("=")
-        print(f"\nRESEARCH SYNTHESIS REPORT — TechCorp Inc.")
+        print("\nRESEARCH SYNTHESIS REPORT — TechCorp Inc.")
         print(f"  Facts scraped:     {total_scraped} (across 3 agents)")
         print(f"  Unique attributes: {total_unique_facts}")
-        print(f"  LWW resolutions:   3 (employee_count, ceo, status)")
+        print("  LWW resolutions:   3 (employee_count, ceo, status)")
         print(f"  Semantic conflicts: {len(events)} flagged for human review")
         if events:
             for ev in events:

@@ -1,4 +1,4 @@
-"""Fact history tracking — all historical versions of each fact."""
+"""Fact history tracking - all historical versions of each fact."""
 
 from __future__ import annotations
 

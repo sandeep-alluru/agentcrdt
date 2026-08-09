@@ -1,4 +1,4 @@
-"""WorldMerger — merge two WorldStores with CRDT semantics + semantic rule checking."""
+"""WorldMerger - merge two WorldStores with CRDT semantics + semantic rule checking."""
 
 from __future__ import annotations
 

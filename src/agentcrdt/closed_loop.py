@@ -1,7 +1,7 @@
 """Closed-loop gates for agentcrdt (CONST-AS-STATE + MAST multi-agent).
 
 Who reads the output?
-  Multi-agent merger consumers, CI, eagle-eyes — anything that must refuse
+  Multi-agent merger consumers, CI, eagle-eyes - anything that must refuse
   caching *code constants* (recipes, fixed configs) as CRDT world state, and
   refuse silent LWW of divergent multi-agent claims (MAST / ICLR class).
 
@@ -13,27 +13,27 @@ What outcome changes?
 
 Farm case CONST-AS-STATE:
   POLYMATTER_RECIPE (and similar) was treated as multi-writer world state and
-  LWW-merged across agents — constants are not agent-mutable reality. The CRDT
+  LWW-merged across agents - constants are not agent-mutable reality. The CRDT
   must refuse constant-only domains so conflicts surface as policy errors, not
   silent last-write-wins of recipes.
 
 Public map (Track B):
   * MAST / AdaMAST multi-agent failure taxonomies
   * ICLR 2026 multi-agent failures / AgentPulse
-  * FedCritic, History Matters — shared state must be *world* state + conflicts
+  * FedCritic, History Matters - shared state must be *world* state + conflicts
 """
 
 from __future__ import annotations
 
-import json
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 
 from agentcrdt.fact import WorldFact
 from agentcrdt.merger import MergeResult
 from agentcrdt.store import WorldStore
 
-# Domains that are code/config constants — never CRDT world state.
+# Domains that are code/config constants - never CRDT world state.
 DEFAULT_CONSTANT_DOMAINS: frozenset[str] = frozenset(
     {
         "constant",
@@ -174,10 +174,7 @@ def is_constant_domain(
     if d in banned:
         return True
     # Prefix match: recipe_v2, constant_xyz, polymatter_*
-    for b in banned:
-        if d.startswith(b + "_") or d.endswith("_" + b):
-            return True
-    return False
+    return any(d.startswith(b + "_") or d.endswith("_" + b) for b in banned)
 
 
 def is_mutable_fact(
@@ -235,7 +232,7 @@ def gate_world_state(
     """Gate a world store / fact list for CONST-AS-STATE discipline.
 
     * Empty → ``FAIL_LOUD`` (exit 2).
-    * Only constant domains → ``FAIL`` (exit 1) — refuse constant-only CRDT.
+    * Only constant domains → ``FAIL`` (exit 1) - refuse constant-only CRDT.
     * Constants mixed with mutable → ``FAIL`` unless ``allow_mixed=True``.
     * Mutable present (and no banned constants if not allow_mixed) → ``PASS``.
 
@@ -246,14 +243,11 @@ def gate_world_state(
             mutable facts also exist (still refuse constant-only).
         require_mutable: If True, at least one mutable fact is required.
     """
-    if isinstance(store, WorldStore):
-        facts = store.list_facts()
-    else:
-        facts = list(store)
+    facts = store.list_facts() if isinstance(store, WorldStore) else list(store)
 
     if len(facts) == 0:
         return _fail_loud(
-            "empty world store — no load-bearing mutable state "
+            "empty world store - no load-bearing mutable state "
             "(CONST-AS-STATE: constant-only or empty is ornament)"
         )
 
@@ -262,7 +256,7 @@ def gate_world_state(
 
     if require_mutable and len(mutable) == 0:
         return _fail(
-            f"CONST-AS-STATE: constant-only domains {list(const_domains)} — "
+            f"CONST-AS-STATE: constant-only domains {list(const_domains)} - "
             f"refuse CRDT world state for recipes/code constants "
             f"(POLYMATTER_RECIPE class)",
             fact_count=len(facts),
@@ -274,7 +268,7 @@ def gate_world_state(
     if constant and not allow_mixed:
         return _fail(
             f"CONST-AS-STATE: store mixes constant domains {list(const_domains)} "
-            f"with mutable state — strip constants before merge",
+            f"with mutable state - strip constants before merge",
             fact_count=len(facts),
             mutable_count=len(mutable),
             constant_count=len(constant),
@@ -307,7 +301,7 @@ def refuse_constant_write(
     """
     if not fact.domain or not str(fact.domain).strip():
         return _fail_loud(
-            "empty domain — refuse write",
+            "empty domain - refuse write",
             fact_count=1,
             constant_count=1,
         )
@@ -315,7 +309,7 @@ def refuse_constant_write(
         d = _canonical_domain(fact.domain)
         return _fail(
             f"CONST-AS-STATE: refuse write to constant domain {d!r} "
-            f"(entity={fact.entity!r} attr={fact.attribute!r}) — "
+            f"(entity={fact.entity!r} attr={fact.attribute!r}) - "
             f"not multi-writer world state",
             fact_count=1,
             mutable_count=0,
@@ -371,7 +365,7 @@ def assert_mutable_write(
 
 
 # ---------------------------------------------------------------------------
-# MAST / multi-agent coordination — silent divergence + unresolved conflicts
+# MAST / multi-agent coordination - silent divergence + unresolved conflicts
 # ---------------------------------------------------------------------------
 
 
@@ -380,7 +374,7 @@ def detect_silent_divergences(store: WorldStore) -> list[ValueDivergence]:
 
     MAST / ICLR multi-agent failure class: agents write incompatible values for
     the same ``domain.entity.attribute``; LWW keeps one winner and **no**
-    :class:`~agentcrdt.fact.ContradictionEvent` is recorded — consumers see a
+    :class:`~agentcrdt.fact.ContradictionEvent` is recorded - consumers see a
     single "truth" that is actually contested.
 
     Uses ``fact_history`` rows. A divergence requires:
@@ -468,7 +462,7 @@ def gate_multi_agent(
     n = len(facts)
     if require_facts and n == 0:
         return _fail_loud(
-            "MAST: empty world store — no multi-agent state to coordinate",
+            "MAST: empty world store - no multi-agent state to coordinate",
             fact_count=0,
             human_required=True,
         )
@@ -476,17 +470,10 @@ def gate_multi_agent(
     events = store.list_events()
     n_events = len(events)
     if n_events > max_unresolved_events:
-        contested = tuple(
-            sorted(
-                {
-                    f"{e.agent_a}|{e.agent_b}|{e.rule}"
-                    for e in events[:20]
-                }
-            )[:10]
-        )
+        contested = tuple(sorted({f"{e.agent_a}|{e.agent_b}|{e.rule}" for e in events[:20]})[:10])
         return _fail(
             f"MAST: {n_events} unresolved contradiction event(s) "
-            f"(max={max_unresolved_events}) — multi-agent conflict not resolved "
+            f"(max={max_unresolved_events}) - multi-agent conflict not resolved "
             f"(ICLR/AgentPulse class)",
             fact_count=n,
             conflict_count=n_events,
@@ -503,7 +490,7 @@ def gate_multi_agent(
             return _fail(
                 f"MAST: {len(divergences)} silent value divergence(s) "
                 f"(multi-agent multi-value history without ContradictionEvent) "
-                f"keys={list(keys)} — refuse silent LWW as truth "
+                f"keys={list(keys)} - refuse silent LWW as truth "
                 f"(AdaMAST/ICLR multi-agent failure class)",
                 fact_count=n,
                 conflict_count=n_events,
@@ -548,8 +535,7 @@ def gate_merge_result(
     n_conf = len(result.conflicts or [])
     if n_merged < min_merged:
         return _fail_loud(
-            f"MAST: merge merged_count={n_merged} < min_merged={min_merged} "
-            f"— empty/ornament merge",
+            f"MAST: merge merged_count={n_merged} < min_merged={min_merged} - empty/ornament merge",
             fact_count=n_merged,
             conflict_count=n_conf,
             human_required=True,
@@ -557,7 +543,7 @@ def gate_merge_result(
     if n_conf > max_conflicts:
         return _fail(
             f"MAST: merge produced {n_conf} conflict(s) (max={max_conflicts}) "
-            f"— refuse post-merge continue without resolution",
+            f"- refuse post-merge continue without resolution",
             fact_count=n_merged,
             conflict_count=n_conf,
             human_required=True,

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import sys
 import tempfile
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -192,14 +191,14 @@ def main() -> None:
                 (e for e in events if "zero-hp" in e.rule or "dead" in e.rule), None
             )
             if alive_dead_conflict or r4.conflicts:
-                print(f"  Contradiction detected! Rule: boss-zero-hp-must-be-dead")
-                print(f"  Auto-resolving: boss.status → 'dead'")
+                print("  Contradiction detected! Rule: boss-zero-hp-must-be-dead")
+                print("  Auto-resolving: boss.status → 'dead'")
                 master.set_fact(WorldFact(
                     domain="combat", entity="boss", attribute="status",
                     value="dead", version=10, agent_id="rule-engine", timestamp=ts(4.0),
                 ))
                 # Unlock loot chest
-                print(f"  Loot trigger: chest unlocked as boss death consequence.")
+                print("  Loot trigger: chest unlocked as boss death consequence.")
                 master.set_fact(WorldFact(
                     domain="inventory", entity="loot-chest-01", attribute="status",
                     value="unlocked", version=2, agent_id="rule-engine", timestamp=ts(4.1),
@@ -220,7 +219,7 @@ def main() -> None:
                               if f.entity == "loot-chest-01"), "?")
             n_conflicts = len(master.list_events())
 
-        print(f"\n  RAID COMPLETE:")
+        print("\n  RAID COMPLETE:")
         print(f"    Boss HP:        10000 → {boss_hp}")
         print(f"    Boss Status:    alive → {boss_st}")
         print(f"    Contradictions: {n_conflicts} resolved (alive/dead)")

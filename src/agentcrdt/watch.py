@@ -1,4 +1,4 @@
-"""Change watching — subscribe to WorldStore mutations."""
+"""Change watching - subscribe to WorldStore mutations."""
 
 from __future__ import annotations
 

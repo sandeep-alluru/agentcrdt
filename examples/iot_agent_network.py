@@ -51,7 +51,7 @@ def print_zone_state(store: WorldStore) -> None:
         hvac  = z.get("hvac_status", "?")
         temp_str = f"{temp}°C" if isinstance(temp, (int, float)) else str(temp)
         occ_str  = "occupied" if occ else "empty"
-        print(f"  {zone_id:<12} {temp_str:>10} {occ_str:>10} {str(hvac):>8}")
+        print(f"  {zone_id:<12} {temp_str:>10} {occ_str:>10} {hvac!s:>8}")
     print()
 
 
@@ -230,7 +230,7 @@ def main() -> None:
         stale_correctly_ignored = zone_d_temp == 23 and zone_d_agent == "building-controller"
         stale_status = "CORRECTLY IGNORED" if stale_correctly_ignored else "ERROR: stale data leaked"
 
-        print(f"\nStep 7: Validating stale data rejection...")
+        print("\nStep 7: Validating stale data rejection...")
         print(f"  zone-D temperature in master = {zone_d_temp}°C "
               f"(source: {zone_d_agent}) — stale agent-D data: {stale_status}")
 
@@ -248,20 +248,20 @@ def main() -> None:
             for ev in events:
                 print(f"  [ALERT] Rule '{ev.rule}' fired")
                 print(f"          Agents involved: {ev.agent_a} vs {ev.agent_b}")
-                print(f"          Zone-E: temp=31°C but hvac=off — maintenance dispatch required")
+                print("          Zone-E: temp=31°C but hvac=off — maintenance dispatch required")
         else:
             print("  No alerts.")
 
         # ── Summary ───────────────────────────────────────────────────────────
         print()
         print_separator("=")
-        print(f"\nSMART BUILDING SYNC REPORT — Apex Tower")
-        print(f"  Agents synced:      6 (A, B, C, D, E, F)")
-        print(f"  Stale updates:      1 (agent-D, 4 min delay, v=1 < v=2 — ignored)")
+        print("\nSMART BUILDING SYNC REPORT — Apex Tower")
+        print("  Agents synced:      6 (A, B, C, D, E, F)")
+        print("  Stale updates:      1 (agent-D, 4 min delay, v=1 < v=2 — ignored)")
         print(f"  Semantic conflicts: {len(events)}")
         if events:
-            print(f"    -> HVAC anomaly: zone-E temp=31°C but hvac_status=off")
-            print(f"       Action: AUTO-ALERT dispatched to facilities management")
+            print("    -> HVAC anomaly: zone-E temp=31°C but hvac_status=off")
+            print("       Action: AUTO-ALERT dispatched to facilities management")
         print()
         print_separator("=")
         print()

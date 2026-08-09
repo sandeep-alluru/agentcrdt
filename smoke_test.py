@@ -54,7 +54,7 @@ def section(title: str) -> None:
     print(f"\n{BOLD}{title}{RESET}")
 
 
-def run(name: str, fn):  # noqa: ANN001
+def run(name: str, fn):
     try:
         fn()
         ok(name)
@@ -74,8 +74,8 @@ def _test_import_version():
 
 def _test_import_public_api():
     from agentcrdt import (
-        ContradictionEvent, MergeResult, RuleEngine, SemanticRule,
-        WorldFact, WorldMerger, WorldStore,
+        WorldMerger,
+        WorldStore,
     )
     assert callable(WorldStore)
     assert callable(WorldMerger)
@@ -250,6 +250,7 @@ def _test_to_markdown():
 
 def _test_print_state():
     from rich.console import Console
+
     from agentcrdt.fact import WorldFact
     from agentcrdt.report import print_state
     buf = io.StringIO()
@@ -260,6 +261,7 @@ def _test_print_state():
 
 def _test_print_state_empty():
     from rich.console import Console
+
     from agentcrdt.report import print_state
     buf = io.StringIO()
     con = Console(file=buf, highlight=False)
@@ -268,6 +270,7 @@ def _test_print_state_empty():
 
 def _test_print_events_empty():
     from rich.console import Console
+
     from agentcrdt.report import print_events
     buf = io.StringIO()
     con = Console(file=buf, highlight=False)
@@ -297,6 +300,7 @@ section("5. CLI (agentcrdt)")
 
 def _test_cli_help():
     from click.testing import CliRunner
+
     from agentcrdt.cli import main
     runner = CliRunner()
     result = runner.invoke(main, ["--help"])
@@ -305,6 +309,7 @@ def _test_cli_help():
 
 def _test_cli_set_get():
     from click.testing import CliRunner
+
     from agentcrdt.cli import main
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -316,6 +321,7 @@ def _test_cli_set_get():
 
 def _test_cli_status():
     from click.testing import CliRunner
+
     from agentcrdt.cli import main
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -339,6 +345,7 @@ def _test_api_import():
 
 def _test_api_health():
     from fastapi.testclient import TestClient
+
     from agentcrdt.api import app
     client = TestClient(app)
     r = client.get("/health")
@@ -348,6 +355,7 @@ def _test_api_health():
 
 def _test_api_fact_workflow():
     from fastapi.testclient import TestClient
+
     from agentcrdt.api import app
     client = TestClient(app)
     with tempfile.TemporaryDirectory() as tmp:
@@ -425,7 +433,7 @@ run("CODEX.md exists and non-empty", lambda: _check_file_nonempty("CODEX.md"))
 run(".github/copilot-instructions.md exists", lambda: _check_file_nonempty(".github/copilot-instructions.md"))
 def _test_cursor_rules():
     mdc_files = list((REPO_ROOT / ".cursor/rules").glob("*.mdc"))
-    assert len(mdc_files) >= 1, f"Expected ≥1 .mdc file in .cursor/rules/, found none"
+    assert len(mdc_files) >= 1, "Expected ≥1 .mdc file in .cursor/rules/, found none"
 
 run(".cursor/rules/ has at least one .mdc file", _test_cursor_rules)
 run(".windsurfrules exists", lambda: _check_file_nonempty(".windsurfrules"))

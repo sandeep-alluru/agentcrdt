@@ -84,7 +84,8 @@ def main() -> None:
         # ── Step 6: formatters ────────────────────────────────────────────────
         print("\nStep 6: JSON and Markdown output.")
         j = json.loads(to_json(facts, events))
-        assert "facts" in j and "events" in j
+        assert "facts" in j
+        assert "events" in j
         md = to_markdown(facts, events)
         assert "agentcrdt world state" in md
         print("  JSON:     OK")

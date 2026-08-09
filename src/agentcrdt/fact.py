@@ -1,4 +1,4 @@
-"""WorldFact and ContradictionEvent — content-addressed primitives of agentcrdt."""
+"""WorldFact and ContradictionEvent - content-addressed primitives of agentcrdt."""
 
 from __future__ import annotations
 

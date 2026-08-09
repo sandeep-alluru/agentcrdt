@@ -119,7 +119,7 @@ class TestContradictionEvent:
         )
         e2 = ContradictionEvent(
             rule="rule-a",
-            facts_involved=["fact2", "fact1"],  # different order — should still match
+            facts_involved=["fact2", "fact1"],  # different order - should still match
             agent_a="agent-1",
             agent_b="agent-2",
         )

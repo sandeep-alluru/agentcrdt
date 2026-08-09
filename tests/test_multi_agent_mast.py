@@ -74,14 +74,15 @@ def test_agreed_agents_pass(tmp_path: Path) -> None:
 
 
 def test_silent_divergence_two_agents_fails(tmp_path: Path) -> None:
-    """Agent A says alive=True, agent B says alive=False — LWW no event."""
+    """Agent A says alive=True, agent B says alive=False - LWW no event."""
     store = WorldStore(tmp_path / "div.db")
     try:
         store.set_fact(_fact("life", "king", "alive", True, agent="alice", version=1, ts=1.0))
         store.set_fact(_fact("life", "king", "alive", False, agent="bob", version=2, ts=2.0))
         divs = detect_silent_divergences(store)
         assert len(divs) == 1
-        assert "alice" in divs[0].agents and "bob" in divs[0].agents
+        assert "alice" in divs[0].agents
+        assert "bob" in divs[0].agents
         assert divs[0].key == "life.king.alive"
 
         out = gate_multi_agent(store)
@@ -186,7 +187,9 @@ def test_e2e_merge_then_gate(tmp_path: Path) -> None:
     local = WorldStore(tmp_path / "local.db")
     remote = WorldStore(tmp_path / "remote.db")
     try:
-        local.set_fact(_fact("alliance", "t1", "valid", True, agent="agent-local", version=1, ts=1.0))
+        local.set_fact(
+            _fact("alliance", "t1", "valid", True, agent="agent-local", version=1, ts=1.0)
+        )
         remote.set_fact(
             _fact("alliance", "t1", "valid", False, agent="agent-remote", version=2, ts=2.0)
         )

@@ -103,7 +103,7 @@ class TestRuleEngine:
             implies_value=0,
         )
         king_dead = _make_fact("life", "king", "alive", False, agent_id="agent-1")
-        # agent-2 says health is 100 — contradiction!
+        # agent-2 says health is 100 - contradiction!
         king_health_wrong = _make_fact("life", "king", "health", 100, agent_id="agent-2")
         facts = {king_dead.id: king_dead, king_health_wrong.id: king_health_wrong}
         engine = RuleEngine(rules=[rule])
@@ -200,7 +200,7 @@ class TestRuleEngine:
         treaty_valid = _make_fact("alliance", "treaty-1", "valid", True)
         facts = {king_dead.id: king_dead, treaty_valid.id: treaty_valid}
         engine = RuleEngine(rules=[rule])
-        # king is dead (trigger), but treaty-1 is still valid=True — contradiction
+        # king is dead (trigger), but treaty-1 is still valid=True - contradiction
         events = engine.check(facts)
         assert len(events) == 1
         assert events[0].rule == "cross-entity-rule"

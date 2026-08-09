@@ -1,4 +1,4 @@
-"""CONST-AS-STATE — refuse constant/recipe domains as CRDT world state.
+"""CONST-AS-STATE - refuse constant/recipe domains as CRDT world state.
 
 Farm: POLYMATTER_RECIPE cached as multi-writer CRDT (silent LWW of constants).
 Public: multi-agent coordination (FedCritic / History Matters) needs real
@@ -142,12 +142,12 @@ def test_gate_mixed_allowed_when_flag_set() -> None:
 
 
 def test_assert_world_state_raises() -> None:
-    with pytest.raises(ClosedLoopError, match="CONST-AS-STATE|FAIL"):
+    with pytest.raises(ClosedLoopError, match=r"CONST-AS-STATE|FAIL"):
         assert_world_state_ok([_recipe()])
 
 
 def test_assert_mutable_write_raises() -> None:
-    with pytest.raises(ClosedLoopError, match="CONST-AS-STATE|FAIL"):
+    with pytest.raises(ClosedLoopError, match=r"CONST-AS-STATE|FAIL"):
         assert_mutable_write(_recipe(domain="config"))
 
 
