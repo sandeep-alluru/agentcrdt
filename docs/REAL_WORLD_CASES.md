@@ -119,10 +119,52 @@ not a coordination protocol.
 **Non-Ornament:** Call `gate_covert_collusion` on multi-agent tool traces before
 treating agents as independent. Pair with `gate_multi_agent` for CRDT values.
 
+---
+
+## Case COMM-ATTACK — multi-robot communication attacks (arXiv 2608.06830)
+
+**Source:** Track B research (`20260810T081229Z`) —
+[When Coordination Becomes a Threat: Communication Attacks in LLM-Controlled
+Multi-Robot Systems](https://arxiv.org/abs/2608.06830v1).
+
+**What fails:**
+
+1. LLM planners coordinate multi-robot / multi-agent systems over message
+   channels (DMAS, HMAS-1, HMAS-2).
+2. **External Entry Point Attack** — untrusted external senders inject into the mesh.
+3. **Privileged In-System Attack** — peers spoof planner/control plane messages.
+4. Content-level reassignment ("ignore previous plan", "reassign target") slips
+   past value-divergence and tool-collusion detectors.
+
+**Product in this repo:**
+
+| Control | API |
+|---------|-----|
+| Message type | `AgentMessage` |
+| Detector | `analyze_comm_attacks` → `CommAttackReport` |
+| Gate | `gate_comm_integrity(...)` |
+| Raise form | `assert_comm_integrity` |
+| Helpers | `detect_comm_injection_phrases`, role/channel classifiers |
+
+**Rules (load-bearing):**
+
+- claim coordinated + empty messages → **FAIL_LOUD**
+- untrusted external entry → **FAIL**
+- privileged channel/role without grant → **FAIL**
+- coordination injection phrases → **FAIL**
+- clean internal mesh → **PASS**
+
+**Tests:** `tests/test_comm_attack.py`
+
+**Non-Ornament:** Call `gate_comm_integrity` **before** executing multi-agent
+coordination plans. Pair with `gate_multi_agent` (values) and
+`gate_covert_collusion` (tool behaviour).
+
 ## Related queue IDs
 
-- **CONST-AS-STATE** — this case (P2)
-- **MAST-MULTI** — silent multi-agent divergence (this section)
-- **COVERT-COLLUSION** — behavioural collusion (this section)
+- **CONST-AS-STATE** — constant domains (P2)
+- **MAST-MULTI** — silent multi-agent divergence
+- **COVERT-COLLUSION** — behavioural collusion
+- **COMM-ATTACK** — message-layer integrity (this section)
 - **NORM-ENFORCE** (normsync) — unattended action without norm
 - **POLICY-ARBITRATION** (rulegraph) — COI / endorse rules
