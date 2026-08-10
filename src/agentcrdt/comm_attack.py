@@ -249,9 +249,7 @@ def analyze_comm_attacks(
     if not system:
         # infer system agents from non-external roles
         system = {
-            _canon(m.sender)
-            for m in parsed
-            if not is_external_role(m.role) and _canon(m.sender)
+            _canon(m.sender) for m in parsed if not is_external_role(m.role) and _canon(m.sender)
         }
     trusted_ext = {_canon(a) for a in (trusted_external_senders or []) if str(a).strip()}
     priv_senders = {_canon(a) for a in (privileged_senders or []) if str(a).strip()}

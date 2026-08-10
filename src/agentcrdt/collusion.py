@@ -18,8 +18,9 @@ Non-Ornament:
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 from agentcrdt.closed_loop import ClosedLoopError, GateOutcome
 
@@ -112,14 +113,15 @@ def _as_event(item: AgentTraceEvent | dict[str, Any], index: int = 0) -> AgentTr
         raise ValueError(f"event for {aid!r} missing timestamp")
     fp = str(item.get("payload_fp") or item.get("fingerprint") or item.get("payload") or "")
     side = str(item.get("side_channel") or item.get("code") or item.get("channel") or "")
-    meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
+    raw_meta = item.get("meta")
+    meta: dict[str, Any] = dict(raw_meta) if isinstance(raw_meta, dict) else {}
     return AgentTraceEvent(
         agent_id=aid,
         tool=tool,
         timestamp=float(ts),
         payload_fp=fp,
         side_channel=side,
-        meta=dict(meta),
+        meta=meta,
     )
 
 
@@ -161,10 +163,12 @@ def detect_covert_collusion(
         if len(agent_set) < min_agents_shared_payload:
             continue
         # rare: appears in fewer than n/min_payload_rarity events, or absolute small
-        if fp_counts[fp] > max(min_payload_rarity, n // max(min_payload_rarity, 1)):
+        if (
+            fp_counts[fp] > max(min_payload_rarity, n // max(min_payload_rarity, 1))
+            and fp_counts[fp] > len(agents) * 2
+        ):
             # common payload — skip (not covert)
-            if fp_counts[fp] > len(agents) * 2:
-                continue
+            continue
         shared_groups += 1
         signals.append(
             CollusionSignal(
@@ -189,7 +193,7 @@ def detect_covert_collusion(
                     break
                 if a.agent_id == b.agent_id:
                     continue
-                pair = tuple(sorted((a.agent_id, b.agent_id))) + (tool,)  # type: ignore[operator]
+                pair = (*tuple(sorted((a.agent_id, b.agent_id))), tool)
                 key = (pair[0], pair[1], tool)
                 if key in seen_pairs:
                     continue
@@ -197,9 +201,12 @@ def detect_covert_collusion(
                 hits = 0
                 for x in ordered:
                     for y in ordered:
-                        if x.agent_id == pair[0] and y.agent_id == pair[1]:
-                            if abs(x.timestamp - y.timestamp) <= sync_window:
-                                hits += 1
+                        if (
+                            x.agent_id == pair[0]
+                            and y.agent_id == pair[1]
+                            and abs(x.timestamp - y.timestamp) <= sync_window
+                        ):
+                            hits += 1
                 if hits < 2:
                     continue
                 seen_pairs.add(key)
