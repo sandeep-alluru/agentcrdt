@@ -162,11 +162,10 @@ def main() -> None:
 
         with WorldStore(crunchbase_db) as remote, WorldStore(master_db) as master:
             r2 = merger.merge(master, remote)
-            lww_employee = ("employee_count: LinkedIn 1200 vs Crunchbase 1100 "
-                            "→ Crunchbase wins by later timestamp")
             print(f"  + agent-crunchbase:  {r2.merged_count} facts merged, "
                   f"{len(r2.conflicts)} conflicts")
-            print(f"    LWW resolution: {lww_employee}")
+            # Avoid clear-text logging of private field values (CodeQL)
+            print("    LWW resolution: employee_count conflict resolved by later timestamp")
 
         with WorldStore(news_db) as remote, WorldStore(master_db) as master:
             r3 = merger.merge(master, remote)
