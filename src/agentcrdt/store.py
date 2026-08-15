@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from agentcrdt.fact import ContradictionEvent, WorldFact
-from agentcrdt.paths import ensure_parent_dir, safe_db_path
+from agentcrdt.paths import connect_sqlite, ensure_parent_dir, resolve_store_path
 
 
 class WorldStore:
@@ -56,10 +56,10 @@ class WorldStore:
 
     def __init__(self, path: str | Path) -> None:
         """Open (or create) a WorldStore at *path*."""
-        confined = safe_db_path(path, env_var="AGENTCRDT_DATA_DIR", default_name="world.db")
-        ensure_parent_dir(confined)
-        self.path = Path(confined)
-        self._conn = sqlite3.connect(confined, check_same_thread=False)
+        full, base = resolve_store_path(path, env_var="AGENTCRDT_DATA_DIR", default_name="world.db")
+        ensure_parent_dir(full, base)
+        self.path = Path(full)
+        self._conn = connect_sqlite(full, base, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(self._SCHEMA)
         self._conn.commit()
