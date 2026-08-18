@@ -50,8 +50,9 @@ def run_server() -> None:
             _mcp_types.Tool(
                 name="set_world_fact",
                 description=(
-                    "Create or update a world fact in a WorldStore. "
-                    "Uses LWW CRDT semantics (higher version wins, then timestamp)."
+                    "Upsert a shared world-state fact into the CRDT store. Use when an agent learns "
+                    "a durable world attribute that other agents must see after merge. Do not use for "
+                    "ephemeral logs — use get_world_facts to read and merge_world_state to reconcile peers."
                 ),
                 inputSchema={
                     "type": "object",
@@ -91,7 +92,7 @@ def run_server() -> None:
             _mcp_types.Tool(
                 name="get_world_facts",
                 description=(
-                    "Retrieve facts from a WorldStore, optionally filtered by domain and/or entity."
+                    "Read current world-state facts from the CRDT store. Use before acting on shared state so the agent sees the latest merged view. Read-only; call set_world_fact to write."
                 ),
                 inputSchema={
                     "type": "object",
@@ -115,8 +116,7 @@ def run_server() -> None:
             _mcp_types.Tool(
                 name="merge_world_state",
                 description=(
-                    "Merge a remote WorldStore into a local one using CRDT LWW semantics. "
-                    "Returns a summary of merged facts and any contradiction events detected."
+                    "Merge a peer agent's world-state snapshot into the local CRDT. Use after receiving state from another agent/process. Prefer this over blind overwrite so concurrent edits converge. Do not use for single-fact updates — use set_world_fact."
                 ),
                 inputSchema={
                     "type": "object",
