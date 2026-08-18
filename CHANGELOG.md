@@ -1,6 +1,12 @@
 # Changelog
 
 
+
+## [0.1.3] - 2026-08-18
+
+### Fixed
+- PyPI trusted publishing: drop GitHub environment claim mismatch; polaroid release workflow callable CI.
+
 ## [0.1.2] - 2026-08-18
 
 ### Changed
